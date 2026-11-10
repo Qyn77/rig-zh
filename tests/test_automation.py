@@ -77,6 +77,16 @@ class AutomationTests(unittest.TestCase):
                      '[dependencies]\nx={path="/tmp/secret"}', '[dependencies]\nx={git="https://example.com/x"}'):
             with self.assertRaises(ValueError): sync_deepseek.validate_cargo_manifest(text)
 
+    def test_embedded_offline_assertions_are_immutable(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            p = root / 'examples/guides/examples/replay.rs'
+            p.parent.mkdir(parents=True)
+            p.write_text('fn main() { assert_eq!(2 + 2, 4); }')
+            editor = sync_deepseek.Editor(root)
+            with self.assertRaises(ValueError):
+                editor.execute('write', {'path': p.relative_to(root).as_posix(), 'content': 'fn main() {}'})
+
     def test_children_never_receive_model_or_github_secrets(self):
         with patch.dict(os.environ, {'DEEPSEEK_API_KEY': 'test-secret', 'GITHUB_TOKEN': 'test-token', 'OTHER_SECRET': 'x'}):
             self.assertFalse({'DEEPSEEK_API_KEY', 'GITHUB_TOKEN', 'OTHER_SECRET'} & automation.clean_env().keys())

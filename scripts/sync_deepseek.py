@@ -81,6 +81,10 @@ class Editor:
     def __init__(self, root=ROOT):
         self.root = root
         self.registry = Path(os.environ.get('CARGO_HOME', str(Path.home() / '.cargo'))) / 'registry/src'
+        # Some offline regressions are embedded in example files, not tests/.
+        # Freeze those complete baseline files: a breaking test API needs manual migration.
+        self.protected = {p.relative_to(root).as_posix() for p in (root / 'examples').rglob('*.rs')
+                          if re.search(r'\bassert(?:_eq|_ne)?!\s*\(|#\[(?:tokio::)?test\]', p.read_text())}
 
     def path(self, name, writable=False):
         path = safe_path(self.root, name)
@@ -90,7 +94,7 @@ class Editor:
             parts = Path(name).parts
             if parts[0] == 'source' or name in ('rust-toolchain.toml', 'update-report.json'):
                 raise ValueError('Fetched source and release metadata are immutable to the model')
-            if 'tests' in parts or name == 'examples/migration/examples/offline.rs':
+            if 'tests' in parts or name == 'examples/migration/examples/offline.rs' or name in self.protected:
                 raise ValueError('Existing offline test harnesses cannot be modified automatically')
             if path.name == 'build.rs':
                 raise ValueError('Adding build scripts is not supported')
