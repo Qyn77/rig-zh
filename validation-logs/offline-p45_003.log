@@ -1,0 +1,12 @@
+   Compiling rig-optional-check v0.1.0 (<temporary>/rig-optional-audit/check)
+warning: unused variable: `req`
+ --> examples/p45_003.rs:9:5
+  |
+9 | let req = VectorSearchRequest::<QdrantFilter>::builder()
+  |     ^^^ help: if this is intentional, prefix it with an underscore: `_req`
+  |
+  = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `rig-optional-check` (example "p45_003") generated 1 warning (run `cargo fix --example "p45_003" -p rig-optional-check` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized] target(s) in 2.34s
+     Running `target/debug/examples/p45_003`

@@ -1,0 +1,30 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::anthropic::{self, Anthropic};\n\n\n// Reads ANTHROPIC_API_KEY (and ANTHROPIC_BASE_URL, if set).\nlet client = Anthropic::from_env()?;\n\n\nlet agent = AgentBuilder::new(client.completion(anthropic::CLAUDE_SONNET_5_5))\n    .preamble(\"You are a helpful assistant.\")\n    .build();\n\n\nlet answer = agent.prompt(\"Hello!\").await?.output();\nprintln!(\"{answer}\");"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::anthropic::{Anthropic, AnthropicConfig};\nuse rig::providers::anthropic::extension::CONTEXT_MANAGEMENT_BETA;\n\n\n// From ANTHROPIC_API_KEY and the optional ANTHROPIC_BASE_URL.\nlet client = Anthropic::from_env()?;\n\n\n// From an explicit key.\nlet client = Anthropic::new(\"your-api-key\");\n\n\n// From a configuration: pin the API version, opt into beta features,\n// or point at another API root.\nlet client = AnthropicConfig::new(\"your-api-key\")\n    .with_version(\"2023-06-01\")\n    .with_beta(CONTEXT_MANAGEMENT_BETA)\n    .with_base_url(\"https://anthropic-proxy.example.com\")\n    .client();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::{Effort, Reasoning};\nuse rig::prelude::*;\nuse rig::providers::anthropic::{self, Anthropic};\n\n\nlet client = Anthropic::from_env()?;\n\n\n// An effort level, for models that take one.\nlet agent = AgentBuilder::new(client.completion(anthropic::CLAUDE_OPUS_4_8))\n    .reasoning(Effort::High)\n    .build();\n\n\n// An explicit thinking budget, for models that take one.\nlet budgeted = AgentBuilder::new(client.completion(anthropic::CLAUDE_HAIKU_4_5))\n    .reasoning(Reasoning::Budget { tokens: 8_000 })\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::CacheRetention;\nuse rig::prelude::*;\nuse rig::providers::anthropic::{self, Anthropic};\n\n\nlet agent = AgentBuilder::new(Anthropic::from_env()?.completion(anthropic::CLAUDE_SONNET_5_5))\n    .preamble(\"A long, stable system prompt...\")\n    .cache(CacheRetention::Short)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::CacheRetention;\nuse rig::prelude::*;\nuse rig::providers::anthropic::{self, Anthropic, completion::CacheTtl};\n\n\nlet mut model = Anthropic::from_env()?.completion(anthropic::CLAUDE_SONNET_5_5);\nmodel.wire = model\n    .wire\n    .with_prompt_caching()\n    .with_static_prefix_cache_ttl(CacheTtl::OneHour);\n\n\nlet agent = AgentBuilder::new(model)\n    .preamble(\"A long, stable system prompt...\")\n    .cache(CacheRetention::Long) // the conversation tail's TTL\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::anthropic::extension::{AnthropicOptions, InferenceGeo};\nuse rig::providers::anthropic::{self, Anthropic};\n\n\nlet options = AnthropicOptions::default()\n    .metadata_user_id(\"user-7\")\n    .inference_geo(InferenceGeo::Us);\n\n\nlet agent = AgentBuilder::new(Anthropic::from_env()?.completion(anthropic::CLAUDE_SONNET_5_5))\n    .provider_option(options)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::CompletionRequest;\nuse rig::providers::anthropic::extension::AnthropicExt;\nuse rig::providers::anthropic::{self, Anthropic};\n\n\nlet model = Anthropic::from_env()?.completion(anthropic::CLAUDE_HAIKU_4_5);\nlet response = model.call(CompletionRequest::new(\"Say hi.\")).await?;\n\n\nprintln!(\"{}\", response.text());\nprintln!(\"cache reads: {:?}\", response.usage.cached_input_tokens);\nif let Some(Ok(extras)) = response.extras::<AnthropicExt>() {\n    println!(\"stop reason: {:?}\", extras.stop_reason);\n}"
+  }
+]

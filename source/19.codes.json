@@ -1,0 +1,22 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::image_generation::ImageGenerationRequestBuilder;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet model = OpenAI::from_env()?.image_generation(openai::GPT_IMAGE_1);\n\n\nlet response = model\n    .call(\n        ImageGenerationRequestBuilder::new(\"A futuristic city at sunset\")\n            .width(1024)\n            .height(1024)\n            .build(),\n    )\n    .await?;\n\n\nstd::fs::write(\"city.png\", &response.image)?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::gemini::{self, Gemini};\n\n\nlet model = Gemini::from_env()?.image_generation(gemini::GEMINI_2_5_FLASH_IMAGE);\nlet response = model\n    .call(ImageGenerationRequestBuilder::new(\"A flat icon of a banana\").build())\n    .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::audio_generation::AudioGenerationRequestBuilder;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet model = OpenAI::from_env()?.audio_generation(openai::TTS_1);\n\n\nlet response = model\n    .call(AudioGenerationRequestBuilder::new(\"Hello, how can I help you today?\", \"alloy\").build())\n    .await?;\n\n\nstd::fs::write(\"hello.mp3\", &response.audio)?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{self, OpenAI};\nuse rig::transcription::TranscriptionRequestBuilder;\n\n\nlet model = OpenAI::from_env()?.transcription(openai::WHISPER_1);\n\n\nlet response = model\n    .call(\n        TranscriptionRequestBuilder::from_file(\"audio.mp3\")?\n            .language(\"en\".to_string())\n            .build(),\n    )\n    .await?;\n\n\nprintln!(\"Transcription: {}\", response.text);"
+  },
+  {
+    "lang": "text",
+    "text": "Transcription: Hey, just calling to confirm our meeting tomorrow at ten. Talk soon."
+  }
+]

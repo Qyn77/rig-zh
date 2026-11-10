@@ -1,0 +1,25 @@
+    Checking rig-guides-audit v0.1.0 (<temporary>/rig-guides-audit)
+warning: unused variable: `answer`
+   --> examples/discord/main.rs:120:5
+    |
+120 | let answer = agent.chat("And how do I configure it?", history).await?.output();
+    |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_answer`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `history_example` is never used
+   --> examples/discord/main.rs:114:10
+    |
+114 | async fn history_example(agent: &Agent,channel_id:u64)-> Result<()> {
+    |          ^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `prompt_example` is never used
+   --> examples/discord/main.rs:123:10
+    |
+123 | async fn prompt_example()-> Result<()> {
+    |          ^^^^^^^^^^^^^^
+
+warning: `rig-guides-audit` (example "discord") generated 3 warnings (run `cargo fix --example "discord" -p rig-guides-audit` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized] target(s) in 1.09s

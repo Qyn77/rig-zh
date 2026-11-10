@@ -1,0 +1,10 @@
+{
+  "name": "rig",
+  "vers": "0.46.0",
+  "yanked": false,
+  "rust_version": "1.97.1",
+  "pubtime": "2026-10-31T07:09:26Z",
+  "cksum": "fc9eff465db44a1c3fa8e1950e54d18e9f1b6721a59cddd44aaeb150a5838e63",
+  "checked_on": "2026-11-10",
+  "source": "https://index.crates.io/3/r/rig"
+}

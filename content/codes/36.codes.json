@@ -1,0 +1,10 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet client = OpenAI::from_env()?;\n\n\n// A completion model, used to build an agent...\nlet agent = AgentBuilder::new(client.completion(openai::GPT_5_5))\n    .preamble(\"You are Gandalf the White, discussing the fate of Middle Earth.\")\n    .build();\n\n\n// ...and an embedding model, for embeddings and vector search.\nlet embedder = client.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"=0.46.0\", features = [\"bedrock\"] }"
+  }
+]

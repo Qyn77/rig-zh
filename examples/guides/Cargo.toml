@@ -1,0 +1,51 @@
+[package]
+name = "rig-guides-audit"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[dependencies]
+rig = "=0.46.0"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.13", features = ["json"], optional = true }
+thiserror = { version = "2", optional = true }
+chrono = { version = "0.4", optional = true }
+futures = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-opentelemetry = { version = "0.33", optional = true }
+opentelemetry = { version = "0.32", optional = true }
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"], optional = true }
+opentelemetry-otlp = { version = "0.32", optional = true }
+serenity = { version = "0.12", optional = true }
+lambda_runtime = { version = "1", optional = true }
+[profile.dev]
+debug = 0
+
+[features]
+otel = ["dep:tracing-opentelemetry", "dep:opentelemetry", "dep:opentelemetry-otlp", "dep:opentelemetry_sdk"]
+discord = ["dep:serenity"]
+flight = ["dep:chrono", "dep:reqwest", "dep:thiserror"]
+lambda = ["dep:lambda_runtime"]
+
+[[example]]
+name = "otel"
+path = "examples/otel.rs"
+required-features = ["otel"]
+
+[[example]]
+name = "discord"
+path = "examples/discord/main.rs"
+required-features = ["discord"]
+
+[[example]]
+name = "flight"
+path = "examples/flight/main.rs"
+required-features = ["flight"]
+
+[[example]]
+name = "lambda"
+path = "examples/lambda.rs"
+required-features = ["lambda"]

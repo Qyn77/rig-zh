@@ -1,0 +1,26 @@
+[
+  {
+    "lang": "rust",
+    "text": "match agent.prompt(\"What is 2 + 2?\").max_turns(3).await {\n    Ok(response) => println!(\"{}\", response.output()),\n    Err(PromptError::Provider(error)) => {\n        eprintln!(\"the model call failed ({:?}): {error}\", error.kind());\n    }\n    Err(PromptError::MaxTurns { max_turns, .. }) => {\n        eprintln!(\"used all {max_turns} model calls without a final answer\");\n    }\n    Err(PromptError::UnknownToolCall { tool_name, .. }) => {\n        eprintln!(\"the model called `{tool_name}`, which this agent doesn't have\");\n    }\n    Err(PromptError::Cancelled { reason, .. }) => eprintln!(\"cancelled: {reason}\"),\n    Err(error) => eprintln!(\"run failed: {error}\"),\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::ProviderError;\n\n\nfn log_failure(error: &ProviderError) {\n    eprintln!(\"{:?} (retryable: {}): {error}\", error.kind(), error.is_retryable());\n    if let Some(status) = error.provider_response_status() {\n        eprintln!(\"provider returned HTTP {status}\");\n    }\n    if let Some(request_id) = error.provider_request_id() {\n        eprintln!(\"quote this request id to the provider: {request_id}\");\n    }\n    match error.provider_response_json() {\n        Ok(Some(body)) => eprintln!(\"error payload: {body}\"),\n        Ok(None) => {}\n        Err(_) => eprintln!(\"non-JSON body: {:?}\", error.provider_response_body()),\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::PromptError;\n\n\nfn is_retryable(error: &PromptError) -> bool {\n    match error {\n        PromptError::Provider(error) => error.is_retryable(),\n        PromptError::Report(report) => report.is_retryable(),\n        _ => false,\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "let agent = AgentBuilder::new(model)\n    .accept_unknown_finish_reasons(true)\n    .build();\n\n\nlet reply = agent\n    .prompt(\"Hello\")\n    .accept_unknown_finish_reasons(true)\n    .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::agent::{Agent, PromptResponse};\nuse rig::completion::PromptError;\nuse std::time::Duration;\n\n\n/// Prompt an agent, retrying transient failures with exponential backoff.\nasync fn prompt_with_retry(\n    agent: &Agent,\n    input: &str,\n    max_attempts: u32,\n) -> Result<PromptResponse, PromptError> {\n    let mut attempt = 0;\n    loop {\n        attempt += 1;\n        let error = match agent.prompt(input).await {\n            Ok(response) => return Ok(response),\n            Err(error) => error,\n        };\n        let retryable = match &error {\n            PromptError::Provider(e) => e.is_retryable(),\n            PromptError::Report(report) => report.is_retryable(),\n            _ => false,\n        };\n        if !retryable || attempt >= max_attempts {\n            return Err(error);\n        }\n        // Prefer the provider's Retry-After header, else back off exponentially.\n        let backoff = error\n            .provider_response_headers()\n            .and_then(|headers| headers.get(\"retry-after\")?.to_str().ok()?.parse().ok())\n            .map(Duration::from_secs)\n            .unwrap_or(Duration::from_millis(200 * 2u64.pow(attempt - 1)));\n        eprintln!(\"attempt {attempt} failed ({error}); retrying in {backoff:?}\");\n        tokio::time::sleep(backoff).await;\n    }\n}"
+  },
+  {
+    "lang": "text",
+    "text": "attempt 1 failed (provider returned 429 Too Many Requests: ...); retrying in 20s"
+  }
+]

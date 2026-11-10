@@ -1,0 +1,28 @@
+warning: unused variable: `store`
+  --> examples/p46_003.rs:13:5
+   |
+13 | let store = SurrealVectorStore::new(
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_store`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+    Checking rig-surreal-check v0.1.0 (<temporary>/rig-optional-audit/surreal)
+warning: `rig-surreal-check` (example "p46_003") generated 1 warning (run `cargo fix --example "p46_003" -p rig-surreal-check` to apply 1 suggestion)
+warning: unused variable: `results`
+  --> examples/p46_002.rs:62:5
+   |
+62 | let results = vector_store.top_n::<WordDefinition>(req).await?;
+   |     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_results`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `threshold` is never used
+  --> examples/p46_002.rs:54:10
+   |
+54 | async fn threshold(vector_store: rig::surrealdb::SurrealVectorStore<surrealdb::engine::local::Db>) -> anyhow::Result<()> {
+   |          ^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `rig-surreal-check` (example "p46_002") generated 2 warnings (run `cargo fix --example "p46_002" -p rig-surreal-check` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized] target(s) in 0.79s

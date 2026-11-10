@@ -1,0 +1,30 @@
+[
+  {
+    "lang": "rust",
+    "text": "use futures::StreamExt;\nuse rig::agent::MultiTurnStreamItem;\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse rig::streaming::{Item, StreamEvent};\nuse std::io::Write;\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .preamble(\"You are a storyteller.\")\n        .build();\n\n\n    let mut stream = agent.prompt(\"Tell me a short story about a robot.\").stream();\n\n\n    while let Some(item) = stream.next().await {\n        match item? {\n            MultiTurnStreamItem::StreamAssistantItem(Item::Event(StreamEvent::Text { text, .. })) => {\n                print!(\"{text}\");\n                std::io::stdout().flush()?;\n            }\n            MultiTurnStreamItem::FinalResponse(response) => {\n                println!(\"\\n\\n{} tokens used\", response.usage().total_tokens.unwrap_or(0));\n            }\n            _ => {}\n        }\n    }\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "text",
+    "text": "Once, in a quiet workshop, a small robot named Bolt woke to the hum of morning\nlight. It had one task left unfinished: to water the single flower on the bench.\n\n\n312 tokens used"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::streaming::{Item, PartKind, StreamEvent, parse_partial_arguments};\nuse std::collections::HashMap;\n\n\nlet mut stream = agent.prompt(\"Write a haiku to notes.md\").max_turns(3).stream();\nlet mut args_so_far: HashMap<usize, String> = HashMap::new();\n\n\nwhile let Some(item) = stream.next().await {\n    match item? {\n        MultiTurnStreamItem::StreamAssistantItem(Item::Event(event)) => match event {\n            StreamEvent::Start { part, kind: PartKind::ToolCall, name } => {\n                println!(\"calling {name:?}\");\n                args_so_far.insert(part.index(), String::new());\n            }\n            StreamEvent::Arguments { part, json } => {\n                if let Some(args) = args_so_far.get_mut(&part.index()) {\n                    args.push_str(&json);\n                    println!(\"  args so far: {:?}\", parse_partial_arguments(args));\n                }\n            }\n            _ => {}\n        },\n        MultiTurnStreamItem::ToolResult { tool_result } => {\n            println!(\"result for {}\", tool_result.call);\n        }\n        _ => {}\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "let mut stream = agent.prompt(\"Hello!\").stream();\nwhile let Some(item) = stream.next().await {\n    match item? {\n        MultiTurnStreamItem::CompletionCall(call) => {\n            println!(\"call {}: {:?} input tokens\", call.call_index, call.usage.input_tokens);\n        }\n        MultiTurnStreamItem::FinalResponse(response) => {\n            println!(\"total: {:?} tokens\", response.usage().total_tokens);\n        }\n        _ => {}\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::agent::stream_to_stdout;\n\n\nlet mut stream = agent.prompt(\"Hello!\").stream();\nlet response = stream_to_stdout(&mut stream).await?;\nprintln!(\"\\n{} model calls\", response.requests());"
+  },
+  {
+    "lang": "rust",
+    "text": "let (run, mut events) = agent.prompt(\"Tell me a joke\").run_channel();\nlet handle = tokio::spawn(run);\n\n\n// Later, from a synchronous tick:\nwhile let Some(item) = events.try_next() {\n    if let MultiTurnStreamItem::FinalResponse(response) = item {\n        println!(\"{}\", response.output());\n    }\n}\n\n\nlet response = handle.await??;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::CompletionRequest;\nuse rig::streaming::{Item, StreamEvent};\n\n\nlet model = OpenAI::from_env()?.completion(openai::GPT_5_5);\nlet request = CompletionRequest::new(Message::user(\"Name three rivers.\"))\n    .preamble(\"Answer briefly.\")\n    .max_tokens(200);\n\n\nlet mut stream = model.stream(request)?;\nwhile let Some(item) = stream.next().await {\n    if let Item::Event(StreamEvent::Text { text, .. }) = item? {\n        print!(\"{text}\");\n    }\n}\n\n\nlet response = stream.finish().await?;\nprintln!(\"\\nfinish reason: {:?}, usage: {:?}\", response.finish_reason(), response.usage);"
+  }
+]

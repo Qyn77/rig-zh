@@ -1,0 +1,50 @@
+[
+  {
+    "lang": "rust",
+    "text": "let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You are a helpful assistant.\")\n    .record_content_telemetry(true) // every run of this agent\n    .build();\n\n\n// Or for a single run:\nlet response = agent.prompt(\"Hello!\").record_content_telemetry(true).await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "tracing_subscriber::fmt().init();"
+  },
+  {
+    "lang": "rust",
+    "text": "tracing_subscriber::registry()\n    .with(\n        tracing_subscriber::EnvFilter::try_from_default_env()\n            .unwrap_or_else(|_| \"info,rig=debug\".into()),\n    )\n    .with(tracing_subscriber::fmt::layer())\n    .init();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse tracing::{info, instrument};\n\n\n#[instrument(name = \"process_user_query\")]\npub async fn process_query(user_input: &str) -> anyhow::Result<String> {\n    info!(\"Processing user query\");\n\n\n    let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .name(\"assistant\")\n        .preamble(\"You are a helpful assistant.\")\n        .build();\n\n\n    // The agent run and its model call emit spans under `process_user_query`.\n    let response = agent.prompt(user_input).await?;\n\n\n    info!(\"Query processed successfully\");\n    Ok(response.output())\n}"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = \"=0.46.0\"\ntracing = \"0.1\"\ntracing-subscriber = { version = \"0.3\", features = [\"env-filter\"] }\ntracing-opentelemetry = \"0.33\"\nopentelemetry = \"0.32\"\nopentelemetry_sdk = { version = \"0.32\", features = [\"rt-tokio\"] }\nopentelemetry-otlp = \"0.32\""
+  },
+  {
+    "lang": "rust",
+    "text": "use opentelemetry::trace::TracerProvider;\nuse opentelemetry_otlp::WithExportConfig;\nuse opentelemetry_sdk::{Resource, trace::SdkTracerProvider};\nuse tracing::Level;\nuse tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    // Sends to http://localhost:4318 unless OTEL_EXPORTER_OTLP_ENDPOINT says otherwise.\n    let exporter = opentelemetry_otlp::SpanExporter::builder()\n        .with_http()\n        .with_protocol(opentelemetry_otlp::Protocol::HttpBinary)\n        .build()?;\n\n\n    let provider = SdkTracerProvider::builder()\n        .with_batch_exporter(exporter)\n        .with_resource(Resource::builder().with_service_name(\"rig-service\").build())\n        .build();\n    let tracer = provider.tracer(\"rig-service\");\n\n\n    tracing_subscriber::registry()\n        .with(\n            tracing_subscriber::EnvFilter::builder()\n                .with_default_directive(Level::INFO.into())\n                .from_env_lossy(),\n        )\n        .with(tracing_subscriber::fmt::layer())\n        .with(tracing_opentelemetry::layer().with_tracer(tracer))\n        .init();\n\n\n    let answer = process_query(\"Hello world!\").await?;\n    println!(\"{answer}\");\n\n\n    // Flush buffered spans before exiting.\n    provider.shutdown()?;\n    Ok(())\n}"
+  },
+  {
+    "lang": "bash",
+    "text": "export OTEL_EXPORTER_OTLP_ENDPOINT=\"https://cloud.langfuse.com/api/public/otel\"\nexport OTEL_EXPORTER_OTLP_HEADERS=\"Authorization=Basic ${AUTH_STRING}\""
+  },
+  {
+    "lang": "yaml",
+    "text": "receivers:\n  otlp:\n    protocols:\n      http:\n        endpoint: 0.0.0.0:4318\n\n\nprocessors:\n  transform:\n    trace_statements:\n      - context: span\n        statements:\n          # Rename \"invoke_agent\" spans to the agent's name, when it has one.\n          - set(name, attributes[\"gen_ai.agent.name\"]) where name == \"invoke_agent\" and attributes[\"gen_ai.agent.name\"] != nil\n\n\nexporters:\n  debug:\n    verbosity: detailed\n  otlphttp/langfuse:\n    endpoint: \"https://cloud.langfuse.com/api/public/otel\"\n    headers:\n      Authorization: \"Basic ${AUTH_STRING}\"\n\n\nservice:\n  pipelines:\n    traces:\n      receivers: [otlp]\n      processors: [transform]\n      exporters: [otlphttp/langfuse, debug]"
+  },
+  {
+    "lang": "dockerfile",
+    "text": "FROM otel/opentelemetry-collector-contrib:0.135.0\nCOPY ./config.yaml /etc/otelcol-contrib/config.yaml"
+  },
+  {
+    "lang": "rust",
+    "text": "use std::io::Write;\n\n\n#[derive(Clone)]\nstruct MessageOnlyLayer;\n\n\nimpl<S> tracing_subscriber::Layer<S> for MessageOnlyLayer\nwhere\n    S: tracing::Subscriber + for<'a> tracing_subscriber::registry::LookupSpan<'a>,\n{\n    fn on_event(&self, event: &tracing::Event<'_>, _ctx: tracing_subscriber::layer::Context<'_, S>) {\n        use tracing::field::{Field, Visit};\n\n\n        struct MessageVisitor(Option<String>);\n\n\n        impl Visit for MessageVisitor {\n            fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {\n                if field.name() == \"message\" {\n                    self.0 = Some(format!(\"{value:?}\"));\n                }\n            }\n        }\n\n\n        let mut visitor = MessageVisitor(None);\n        event.record(&mut visitor);\n\n\n        if let Some(msg) = visitor.0 {\n            let level = event.metadata().level();\n            let _ = writeln!(std::io::stdout(), \"{level} {}\", msg.trim_matches('\"'));\n        }\n    }\n}\n\n\nfn init_logging() {\n    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};\n\n\n    tracing_subscriber::registry()\n        .with(tracing_subscriber::EnvFilter::new(\"info\"))\n        .with(MessageOnlyLayer)\n        .init();\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::telemetry::{GenAiOperation, SpanBuilder};\n\n\nlet span = SpanBuilder::new(\"my-provider\", \"my-model\", GenAiOperation::Chat)\n    .streaming(false)\n    .build();\nlet _guard = span.enter();"
+  },
+  {
+    "lang": "rust",
+    "text": "use std::sync::Arc;\nuse rig::completion::CompletionRequest;\nuse rig::observe::{AdapterContext, ObservationLog, Subject};\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet log = Arc::new(ObservationLog::with_capacity(256));\nlet context = AdapterContext::new(log.clone(), Subject::scoped(\"checkout\"), \"summarize-1\");\n\n\nlet model = OpenAI::from_env()?.completion(openai::GPT_5_5);\nmodel.call_observed(CompletionRequest::new(\"Hello!\"), context).await?;\n\n\nfor observation in log.trace().observations {\n    println!(\"{:?}\", observation.action);\n}"
+  }
+]

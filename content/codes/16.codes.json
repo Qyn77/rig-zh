@@ -1,0 +1,38 @@
+[
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::memory::{MemoryStore, load};\n    use rig::providers::openai::{self, OpenAI};\n    let store = MemoryStore::default();\n    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .preamble(\"You are a helpful assistant.\")\n        .memory(store.clone()).build();\n    agent.prompt(\"My name is Ada.\").conversation(\"user-42\").await?;\n    let reply = agent.prompt(\"What's my name?\").conversation(\"user-42\").await?;\n    println!(\"{}\", reply.output());\n    assert_eq!(load(&store, \"user-42\")?.messages().len(), 4);\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "text",
+    "text": "Your name is Ada."
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::memory::{MemoryStore, load, save};\nuse rig::message::Message;\n\nfn main() -> anyhow::Result<()> {\n    // Store / AsyncStore replace ConversationMemory. load/save manage session format.\n    let store = MemoryStore::default();\n    let mut conversation = load(&store, \"user-42\")?;\n    conversation.extend([Message::user(\"My name is Ada.\"), Message::assistant(\"Hello, Ada!\")]);\n    save(&store, \"user-42\", &mut conversation)?;\n    let resumed = load(&store, \"user-42\")?;\n    assert_eq!(resumed.messages(), conversation.messages());\n    println!(\"saved and restored {} messages\", resumed.messages().len());\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "toml",
+    "text": "rig = { version = \"=0.46.0\", features = [\"memory\"] }"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::memory::{MemoryStore, load, save};\n    use rig::memory::recent::{view, LastMessages};\n    use rig::providers::openai::{self, OpenAI};\n    let store = MemoryStore::default();\n    let mut conversation = load(&store, \"user-42\")?;\n    let selected = view(conversation.messages(), &LastMessages(20)).to_vec();\n    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5)).build();\n    // Restrict only the request window; retain the full stored conversation.\n    let response = agent.prompt(\"Hello!\").history(selected).await?;\n    println!(\"{}\", response.output());\n    conversation.extend(response.messages);\n    save(&store, \"user-42\", &mut conversation)?;\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::memory::{MemoryStore, load, save};\n    use rig::memory::recent::{view, TokenBudget};\n    use rig::providers::openai::{self, OpenAI};\n    let store = MemoryStore::default();\n    let mut conversation = load(&store, \"user-42\")?;\n    let selected = view(conversation.messages(), &TokenBudget::new(4_000)).to_vec();\n    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5)).build();\n    // Restrict only the request window; retain the full stored conversation.\n    let response = agent.prompt(\"Hello!\").history(selected).await?;\n    println!(\"{}\", response.output());\n    conversation.extend(response.messages);\n    save(&store, \"user-42\", &mut conversation)?;\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::catalog::Catalog;\n    use rig::memory::{MemoryStore, load, save, Summarizer, SummaryState, CompactReason, apply_summary};\n    use rig::message::Message;\n    use rig::providers::openai::{self, OpenAI};\n    let store = MemoryStore::default();\n    let mut conversation = load(&store, \"user-42\")?;\n    conversation.extend([Message::user(\"My name is Ada. I am learning Rust.\"),\n        Message::assistant(\"I will remember that.\")]);\n    let model = OpenAI::from_env()?.completion(openai::GPT_5_5);\n    let resolved = Catalog::builtin().resolve(\"openai/gpt-5.5\")?;\n    let reason = CompactReason::Asked { focus: \"Keep the user's name and learning goal\".into() };\n    let request = Summarizer::default().request(conversation.messages(), \"\", &reason, &resolved.spec)?;\n    let reply = model.call(request).await?;\n    let state = SummaryState { summary: Summarizer::summary_text(&reply)?, ..Default::default() };\n    // None summarizes all messages; pass a MessageId to keep a recent suffix.\n    apply_summary(&mut conversation, None, &state)\n        .ok_or_else(|| anyhow::anyhow!(\"summary was not applied\"))?;\n    save(&store, \"user-42\", &mut conversation)?;\n    println!(\"{}\", state.summary);\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::message::Message;\n    use rig::providers::openai::{self, OpenAI};\n    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .preamble(\"You are a helpful assistant. Be concise.\").build();\n    let mut history: Vec<Message> = Vec::new();\n    agent.chat(\"My name is Ada.\", &mut history).await?;\n    let reply = agent.chat(\"What's my name?\", &mut history).await?;\n    println!(\"{}\", reply.output());\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::message::Message;\n    use rig::providers::openai::{self, OpenAI};\n    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5)).build();\n    let mut history = vec![Message::user(\"What is Rust?\"),\n        Message::assistant(\"Rust is a systems programming language.\")];\n    let response = agent.prompt(\"Who created it?\").history(history.clone()).await?;\n    println!(\"{}\", response.output());\n    history.extend(response.messages);\n    Ok(())\n}\n"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "lang": "bash",
+    "text": "cargo init my-first-agent\ncd my-first-agent"
+  },
+  {
+    "lang": "bash",
+    "text": "cargo add rig anyhow\ncargo add tokio --features macros,rt-multi-thread"
+  },
+  {
+    "lang": "bash",
+    "text": "export OPENAI_API_KEY=\"sk-...\""
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[tokio::main]\nasync fn main() -> Result<(), anyhow::Error> {\n    // A client for OpenAI, configured from OPENAI_API_KEY.\n    let client = OpenAI::from_env()?;\n\n\n    // An agent: a completion model plus a system prompt (the \"preamble\").\n    let agent = AgentBuilder::new(client.completion(openai::GPT_5_5))\n        .preamble(\"You are a helpful assistant.\")\n        .build();\n\n\n    // Send a prompt and await the model's reply.\n    let response = agent.prompt(\"What is the Rust programming language?\").await?;\n\n\n    println!(\"{}\", response.output());\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "bash",
+    "text": "cargo run"
+  },
+  {
+    "lang": "text",
+    "text": "Rust is a modern, statically typed systems programming language focused on\nsafety, speed, and concurrency without a garbage collector. Its ownership and\nborrowing model guarantees memory safety at compile time, while zero-cost\nabstractions keep it as fast as C/C++..."
+  }
+]

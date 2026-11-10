@@ -1,0 +1,26 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse serde::{Deserialize, Serialize};\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[derive(Embed, Clone, Serialize, Deserialize, Debug)]\nstruct WordDefinition {\n    id: String,\n    #[embed]\n    definition: String,\n}\n\n\n#[tokio::main]\nasync fn main() -> Result<(), anyhow::Error> {\n    let model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\n    let documents = vec![\n        WordDefinition { id: \"doc0\".into(), definition: \"A flurbo is a green alien.\".into() },\n        WordDefinition { id: \"doc1\".into(), definition: \"A glarb-glarb is an ancient farming tool.\".into() },\n    ];\n\n\n    // Embed each document's `#[embed]` field.\n    let embeddings = EmbeddingsBuilder::new(model.clone())\n        .documents(documents)?\n        .build()\n        .await?;\n\n\n    // Store the documents and build an index that embeds queries with the same model.\n    let index = InMemoryVectorStore::from_documents(embeddings).index(model);\n\n\n    let req = VectorSearchRequest::builder()\n        .query(\"What is a flurbo?\")\n        .samples(1)\n        .build();\n\n\n    for result in index.top_n::<WordDefinition>(req).await? {\n        println!(\"{:.3} {}: {}\", result.score, result.id, result.document.definition);\n    }\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[derive(Embed, Clone, Serialize, Deserialize)]\nstruct Document {\n    id: String,\n    #[embed]\n    content: String,\n}\n\n\nlet model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\nlet docs = vec![Document { id: \"doc0\".into(), content: \"Rig is a Rust library.\".into() }];\n\n\nlet embeddings: Vec<(Document, Vec<rig::embeddings::Embedding>)> =\n    EmbeddingsBuilder::new(model)\n        .documents(docs)?\n        .build()\n        .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "pub trait VectorStoreIndex: Send + Sync {\n    /// The backend's filter type.\n    type Filter: SearchFilter + Send + Sync;\n\n\n    /// The top `samples` documents, most similar first, deserialized as `T`.\n    async fn top_n<T: DeserializeOwned + Send>(\n        &self,\n        req: VectorSearchRequest<Self::Filter>,\n    ) -> Result<Vec<VectorSearchResult<T>>, VectorStoreError>;\n\n\n    /// The same ranking, ids and scores only.\n    async fn top_n_ids(\n        &self,\n        req: VectorSearchRequest<Self::Filter>,\n    ) -> Result<Vec<VectorSearchIdResult>, VectorStoreError>;\n}\n\n\npub struct VectorSearchResult<T> {\n    pub score: f64,   // scale and direction follow the backend's metric\n    pub id: String,\n    pub document: T,\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "pub trait InsertDocuments: Send + Sync {\n    async fn insert_documents<Doc: Serialize + Embed + Send>(\n        &self,\n        documents: Vec<(Doc, Vec<Embedding>)>,\n    ) -> Result<(), VectorStoreError>;\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet client = OpenAI::from_env()?;\nlet index = InMemoryVectorStore::<String>::default()\n    .index(client.embedding(openai::TEXT_EMBEDDING_3_SMALL, None));\n\n\nlet agent = AgentBuilder::new(client.completion(openai::GPT_5_5))\n    .preamble(\"Search the knowledge base before answering.\")\n    .tool(index)\n    .build();"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"0.44.0\", features = [\"qdrant\"] }"
+  }
+]

@@ -1,0 +1,54 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let model = OpenAI::from_env()?.completion(openai::GPT_5_5);\n\n\n    let agent = AgentBuilder::new(model)\n        .preamble(\"You are a helpful assistant.\")\n        .temperature(0.7)\n        .build();\n\n\n    let response = agent.prompt(\"Hello!\").await?;\n    println!(\"{}\", response.output());\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "text",
+    "text": "Hello! How can I help you today?"
+  },
+  {
+    "lang": "mermaid",
+    "text": "flowchart TD\n    P[\"agent.prompt(...)\"] --> M[\"Send request to model<br/>(preamble + context + history + tools)\"]\n    M --> D{\"Model response\"}\n    D -- \"text\" --> F[\"Return the answer\"]\n    D -- \"tool calls\" --> T[\"Rig executes the tools,<br/>appends results to history\"]\n    T --> B{\"Turn budget left?\"}\n    B -- \"yes\" --> M\n    B -- \"no\" --> E[\"Err(PromptError::MaxTurns)\"]"
+  },
+  {
+    "lang": "rust",
+    "text": "let response = tool_agent\n    .prompt(\"Please calculate 2 + 5, then multiply the result by 3\")\n    .max_turns(5) // two rounds of tool calls plus the answer, with room to spare\n    .await?;\n\n\nprintln!(\"{response}\");"
+  },
+  {
+    "lang": "text",
+    "text": "2 + 5 = 7, and 7 × 3 = 21."
+  },
+  {
+    "lang": "rust",
+    "text": "let response = agent.prompt(\"What is 2 + 2?\").max_turns(3).await?;\n\n\nprintln!(\"answer: {}\", response.output());\nprintln!(\n    \"tokens: {:?} in / {:?} out across {} model calls\",\n    response.usage.input_tokens,\n    response.usage.output_tokens,\n    response.requests(),\n);\nprintln!(\"messages produced by this run: {}\", response.messages.len());"
+  },
+  {
+    "lang": "text",
+    "text": "answer: 2 + 2 = 4.\ntokens: Some(28) in / Some(12) out across 1 model calls\nmessages produced by this run: 2"
+  },
+  {
+    "lang": "rust",
+    "text": "#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]\nstruct Forecast {\n    city: String,\n    temperature_f: f64,\n}\n\n\nlet forecast: Forecast = agent\n    .prompt_typed::<Forecast>(\"Give me a plausible forecast for New York.\")\n    .retries(1) // re-run once if the output doesn't parse as `Forecast`\n    .await?\n    .output;\n\n\nprintln!(\"{} will be {}°F\", forecast.city, forecast.temperature_f);"
+  },
+  {
+    "lang": "rust",
+    "text": "let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You are a calculator. Use the tools to compute results.\")\n    .tool(Add)\n    .default_max_turns(3) // tool call(s), then the answer\n    .build();\n\n\nlet response = agent.prompt(\"What is 2 + 5?\").await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::message::ToolChoice;\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You are a calculator. Always compute with tools, never in your head.\")\n    .tool_choice(ToolChoice::Required) // the model must call a tool before answering\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "let model = OpenAI::from_env()?.completion(openai::GPT_5_5).erase();\n\n\n// The worker: a specialised sub-agent.\nlet bob = AgentBuilder::new(model.clone())\n    .name(\"bob\")\n    .description(\"An employee who handles admin tasks at FooBar Inc.\")\n    .preamble(\"You are Bob, an admin employee. Your manager Alice may ask you to do things.\")\n    .build();\n\n\n// The manager: prompts Bob by calling him as a tool.\nlet alice = AgentBuilder::new(model)\n    .name(\"alice\")\n    .preamble(\"You are Alice, a manager in the admin department. You manage Bob.\")\n    .dynamic_tool(bob.into_tool()?)\n    .build();\n\n\nlet response = alice\n    .prompt(\"Ask Bob to draft a welcome email and tell me what he wrote.\")\n    .max_turns(3)\n    .await?;\n\n\nprintln!(\"{response}\");"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::agent::{AgentHook, HookContext, ModelSelection, ModelSelectionAction};\n\n\n/// A cheap model for the first call; the stronger one once tool results are in.\nstruct CheapFirst;\n\n\nimpl AgentHook for CheapFirst {\n    fn on_model_select(&self, ctx: &HookContext, _event: ModelSelection<'_>) -> ModelSelectionAction {\n        if ctx.turn() == 1 {\n            ModelSelectionAction::select(\"fast\")\n        } else {\n            ModelSelectionAction::select(\"strong\")\n        }\n    }\n}\n\n\nlet client = OpenAI::from_env()?;\nlet agent = AgentBuilder::named_model(\"fast\", client.completion(openai::GPT_5_4_MINI))\n    .model_route(\"strong\", client.completion(openai::GPT_5_5))\n    .add_hook(CheapFirst)\n    .build();\n\n\n// Or skip the hook and pick one model for a whole run:\nlet response = agent.prompt(\"Summarize Rust's ownership rules.\").using_model(\"strong\").await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::Effort;\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You are a helpful agent.\")\n    .reasoning(Effort::High)\n    .additional_params(json!({ \"user\": \"user-42\" }))\n    .build();"
+  }
+]

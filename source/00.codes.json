@@ -1,0 +1,6 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[tokio::main]\nasync fn main() -> Result<(), anyhow::Error> {\n    // Reads the OPENAI_API_KEY environment variable.\n    let model = OpenAI::from_env()?.completion(openai::GPT_5_5);\n\n\n    // Build an agent from a model and a system prompt.\n    let agent = AgentBuilder::new(model)\n        .preamble(\"You are a helpful assistant.\")\n        .build();\n\n\n    // Send a prompt and await the response.\n    let answer = agent.prompt(\"Who are you?\").await?;\n    println!(\"{}\", answer.output());\n\n\n    Ok(())\n}"
+  }
+]

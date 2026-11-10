@@ -1,0 +1,18 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::integrations::cli_chatbot::ChatBotBuilder;\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .preamble(\"You are a helpful assistant.\")\n        .build();\n\n\n    // Start the REPL. Type \"exit\" to quit.\n    ChatBotBuilder::new().agent(agent).build().run().await?;\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "ChatBotBuilder::new()\n    .agent(agent)\n    .max_turns(5)   // model-call budget per prompt, so the agent can use tools\n    .show_usage()   // print input/output token counts after each answer\n    .build()\n    .run()\n    .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::embeddings::EmbeddingsBuilder;\nuse rig::integrations::cli_chatbot::ChatBotBuilder;\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse rig::vector_store::in_memory_store::InMemoryVectorStore;\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let client = OpenAI::from_env()?;\n    let embedding_model = client.embedding(openai::TEXT_EMBEDDING_3_SMALL, None).erase();\n\n\n    let embeddings = EmbeddingsBuilder::new(embedding_model.clone())\n        .documents(vec![\n            \"Rig is a Rust library for building LLM applications.\".to_string(),\n            \"A Rig agent combines a model, a preamble, context and tools.\".to_string(),\n        ])?\n        .build()\n        .await?;\n    let index = InMemoryVectorStore::from_documents(embeddings).index(embedding_model);\n\n\n    let agent = AgentBuilder::new(client.completion(openai::GPT_5_5))\n        .preamble(\"Answer using the retrieved context.\")\n        .dynamic_context(2, index)\n        .build();\n\n\n    ChatBotBuilder::new().agent(agent).build().run().await?;\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::PromptError;\nuse rig::integrations::cli_chatbot::{Chat, ChatBotBuilder};\nuse rig::message::Message;\nuse rig::wasm_compat::WasmCompatSend;\n\n\n/// Replies with the length of the conversation so far.\nstruct Echo;\n\n\nimpl Chat for Echo {\n    async fn chat(\n        &self,\n        prompt: impl Into<Message> + WasmCompatSend,\n        history: &mut Vec<Message>,\n    ) -> Result<String, PromptError> {\n        let prompt: Message = prompt.into();\n        history.push(prompt);\n        let reply = format!(\"turn {}\", history.len());\n        history.push(Message::assistant(reply.clone()));\n        Ok(reply)\n    }\n}\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    ChatBotBuilder::new().chat(Echo).build().run().await?;\n    Ok(())\n}"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "lang": "bash",
+    "text": "cargo new rag_system\ncd rag_system"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"0.44.0\", features = [\"pdf\"] }\ntokio = { version = \"1\", features = [\"full\"] }\nanyhow = \"1\"\nserde = { version = \"1\", features = [\"derive\"] }"
+  },
+  {
+    "lang": "bash",
+    "text": "export OPENAI_API_KEY=your_api_key_here"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::Embed;\nuse rig::loaders::PdfFileLoader;\nuse serde::Serialize;\n\n\n/// One page of a PDF. `#[embed]` marks the field that gets embedded.\n#[derive(Embed, Serialize, Clone)]\nstruct Page {\n    id: String,\n    #[embed]\n    text: String,\n}\n\n\nfn load_pages(glob: &str) -> anyhow::Result<Vec<Page>> {\n    let pages = PdfFileLoader::with_glob(glob)?\n        .load()\n        .ignore_errors() // skip files that fail to open\n        .by_page()\n        .into_iter()\n        .collect::<Result<Vec<String>, _>>()?;\n\n\n    Ok(pages\n        .into_iter()\n        .enumerate()\n        .filter(|(_, text)| !text.trim().is_empty())\n        .map(|(i, text)| Page { id: format!(\"page-{i}\"), text })\n        .collect())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::embeddings::EmbeddingsBuilder;\nuse rig::providers::openai::{self, OpenAI};\nuse rig::vector_store::in_memory_store::InMemoryVectorStore;\n\n\nlet openai_client = OpenAI::from_env()?;\nlet embedding_model = openai_client\n    .embedding(openai::TEXT_EMBEDDING_3_SMALL, None)\n    .erase();\n\n\nlet pages = load_pages(\"documents/*.pdf\")?;\n\n\nlet embeddings = EmbeddingsBuilder::new(embedding_model.clone())\n    .documents(pages)?\n    .build()\n    .await?;\n\n\nlet vector_store = InMemoryVectorStore::from_documents_with_id_f(embeddings, |page| page.id.clone());"
+  },
+  {
+    "lang": "rust",
+    "text": "let index = vector_store.index(embedding_model);\n\n\nlet rag_agent = AgentBuilder::new(openai_client.completion(openai::GPT_5_5))\n    .preamble(\"You are a helpful assistant that answers questions using the provided PDF context.\")\n    .dynamic_context(4, index)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::vector_store::{VectorSearchRequest, VectorStoreIndex};\n\n\nlet req = VectorSearchRequest::builder()\n    .query(\"what did Sam Altman write?\")\n    .samples(2)\n    .build();\n\n\nfor hit in index.top_n::<Page>(req).await? {\n    println!(\"{:.3} {}: {}\", hit.score, hit.id, hit.document.text);\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::integrations::cli_chatbot::ChatBotBuilder;\n\n\nlet chatbot = ChatBotBuilder::new().agent(rag_agent).build();\nchatbot.run().await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::Embed;\nuse rig::embeddings::EmbeddingsBuilder;\nuse rig::integrations::cli_chatbot::ChatBotBuilder;\nuse rig::loaders::PdfFileLoader;\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse rig::vector_store::in_memory_store::InMemoryVectorStore;\nuse serde::Serialize;\n\n\n#[derive(Embed, Serialize, Clone)]\nstruct Page {\n    id: String,\n    #[embed]\n    text: String,\n}\n\n\nfn load_pages(glob: &str) -> anyhow::Result<Vec<Page>> {\n    let pages = PdfFileLoader::with_glob(glob)?\n        .load()\n        .ignore_errors()\n        .by_page()\n        .into_iter()\n        .collect::<Result<Vec<String>, _>>()?;\n\n\n    Ok(pages\n        .into_iter()\n        .enumerate()\n        .filter(|(_, text)| !text.trim().is_empty())\n        .map(|(i, text)| Page { id: format!(\"page-{i}\"), text })\n        .collect())\n}\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let openai_client = OpenAI::from_env()?;\n    let embedding_model = openai_client\n        .embedding(openai::TEXT_EMBEDDING_3_SMALL, None)\n        .erase();\n\n\n    let embeddings = EmbeddingsBuilder::new(embedding_model.clone())\n        .documents(load_pages(\"documents/*.pdf\")?)?\n        .build()\n        .await?;\n\n\n    let index = InMemoryVectorStore::from_documents_with_id_f(embeddings, |page| page.id.clone())\n        .index(embedding_model);\n\n\n    let rag_agent = AgentBuilder::new(openai_client.completion(openai::GPT_5_5))\n        .preamble(\"You are a helpful assistant that answers questions using the provided PDF context.\")\n        .dynamic_context(4, index)\n        .build();\n\n\n    let chatbot = ChatBotBuilder::new().agent(rag_agent).build();\n    chatbot.run().await?;\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "bash",
+    "text": "cargo run"
+  }
+]

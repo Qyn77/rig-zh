@@ -1,0 +1,22 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse serde::{Deserialize, Serialize};\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[derive(Embed, Clone, Serialize, Deserialize, Debug)]\nstruct WordDefinition {\n    id: String,\n    #[embed]\n    definition: String,\n}\n\n\n#[tokio::main]\nasync fn main() -> Result<(), anyhow::Error> {\n    let model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\n    let documents = vec![\n        WordDefinition { id: \"doc0\".into(), definition: \"First document content\".into() },\n        WordDefinition { id: \"doc1\".into(), definition: \"Second document content\".into() },\n    ];\n\n\n    let embeddings = EmbeddingsBuilder::new(model.clone())\n        .documents(documents)?\n        .build()\n        .await?;\n\n\n    // Build the store, then an index that embeds queries with the same model.\n    let index = InMemoryVectorStore::from_documents(embeddings).index(model);\n\n\n    let req = VectorSearchRequest::builder()\n        .query(\"search query\")\n        .samples(5)\n        .build();\n\n\n    for result in index.top_n::<WordDefinition>(req).await? {\n        println!(\"{:.3} {} {:?}\", result.score, result.id, result.document);\n    }\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::embeddings::Embedding;\n\n\n#[derive(Serialize, Clone)]\nstruct WordDefinition { id: String }\n\n\nlet doc = |id: &str| (WordDefinition { id: id.into() }, vec![Embedding::default()]);\n\n\n// 1. Generated ids: \"doc0\", \"doc1\", ...\nlet store = InMemoryVectorStore::from_documents(vec![doc(\"a\"), doc(\"b\")]);\n\n\n// 2. Explicit ids\nlet store = InMemoryVectorStore::from_documents_with_ids(vec![\n    (\"custom_id_1\", doc(\"a\").0, doc(\"a\").1),\n    (\"custom_id_2\", doc(\"b\").0, doc(\"b\").1),\n]);\n\n\n// 3. Ids derived from each document\nlet store = InMemoryVectorStore::from_documents_with_id_f(\n    vec![doc(\"a\"), doc(\"b\")],\n    |d| format!(\"word:{}\", d.id),\n);"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::embeddings::Embedding;\nuse rig::vector_store::IndexStrategy;\n\n\nlet store = InMemoryVectorStore::builder()\n    .index_strategy(IndexStrategy::LSH { num_tables: 8, num_hyperplanes: 16 })\n    .documents(embeddings)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::vector_store::request::{Filter, SearchFilter};\n\n\nlet req = VectorSearchRequest::builder()\n    .query(\"search query\")\n    .samples(5)\n    .filter(Filter::eq(\"category\", json!(\"science\")))\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet client = OpenAI::from_env()?;\nlet model = client.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\nlet index = InMemoryVectorStore::<String>::default().index(model);\n\n\nlet agent = AgentBuilder::new(client.completion(openai::GPT_5_5))\n    .preamble(\"Answer using the retrieved documents.\")\n    .dynamic_context(2, index)\n    .build();"
+  }
+]

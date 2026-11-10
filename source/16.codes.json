@@ -1,0 +1,38 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::memory::InMemoryConversationMemory;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You are a helpful assistant.\")\n    .memory(InMemoryConversationMemory::new())\n    .build();\n\n\n// Each conversation id keeps its own history.\nagent.prompt(\"My name is Ada.\").conversation(\"user-42\").await?;\nlet reply = agent.prompt(\"What's my name?\").conversation(\"user-42\").await?;\nprintln!(\"{}\", reply.output());"
+  },
+  {
+    "lang": "text",
+    "text": "Your name is Ada."
+  },
+  {
+    "lang": "rust",
+    "text": "pub trait ConversationMemory: WasmCompatSend + WasmCompatSync {\n    /// Load the full history for a conversation (empty Vec if none).\n    fn load<'a>(&'a self, conversation_id: &'a ConversationId)\n        -> WasmBoxedFuture<'a, Result<Vec<Message>, MemoryError>>;\n\n\n    /// Append the messages of a successful turn.\n    fn append<'a>(&'a self, conversation_id: &'a ConversationId, messages: Vec<Message>)\n        -> WasmBoxedFuture<'a, Result<(), MemoryError>>;\n\n\n    /// Remove all stored messages for a conversation.\n    fn clear<'a>(&'a self, conversation_id: &'a ConversationId)\n        -> WasmBoxedFuture<'a, Result<(), MemoryError>>;\n}"
+  },
+  {
+    "lang": "toml",
+    "text": "rig = { version = \"0.44.0\", features = [\"memory\"] }"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::memory::{InMemoryConversationMemory, IntoFilter, SlidingWindowMemory};\n\n\nlet memory = InMemoryConversationMemory::new()\n    .with_filter(SlidingWindowMemory::last_messages(20).into_filter());"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::memory::{HeuristicTokenCounter, InMemoryConversationMemory, IntoFilter, TokenWindowMemory};\n\n\nlet memory = InMemoryConversationMemory::new().with_filter(\n    TokenWindowMemory::new(4_000, HeuristicTokenCounter::default()).into_filter(),\n);"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::memory::{CompactingMemory, InMemoryConversationMemory, SlidingWindowMemory, TemplateCompactor};\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet memory = CompactingMemory::new(\n    InMemoryConversationMemory::new(),\n    SlidingWindowMemory::last_messages(20),\n    TemplateCompactor::new(), // plain-text rollup, no model call\n);\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You are a helpful assistant.\")\n    .memory(memory)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{self, OpenAI};\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You are a helpful assistant. Be concise.\")\n    .build();\n\n\nlet mut history: Vec<Message> = Vec::new();\nagent.chat(\"My name is Ada.\", &mut history).await?;\nlet reply = agent.chat(\"What's my name?\", &mut history).await?;\nprintln!(\"{}\", reply.output());"
+  },
+  {
+    "lang": "rust",
+    "text": "let mut history = vec![\n    Message::user(\"What is the Rust programming language?\"),\n    Message::assistant(\"Rust is a systems programming language...\"),\n];\n\n\nlet response = agent.prompt(\"Who created it?\").history(history.clone()).await?;\nhistory.extend(response.messages);"
+  }
+]

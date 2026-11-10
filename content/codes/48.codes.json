@@ -1,0 +1,22 @@
+[
+  {
+    "lang": "bash",
+    "text": "git clone --branch v0.46.0 https://github.com/0xPlaygrounds/rig\ncd rig\n\n\nexport OPENAI_API_KEY=...\n# export ANTHROPIC_API_KEY=...  GEMINI_API_KEY=...  COHERE_API_KEY=...\n\n\ncargo run -p agent"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse serde::Deserialize;\nuse serde_json::json;\n\n\n#[derive(Deserialize)]\nstruct AddArgs {\n    a: i32,\n    b: i32,\n}\n\n\n#[derive(Debug, thiserror::Error)]\n#[error(\"math error\")]\nstruct MathError;\n\n\nstruct Adder;\n\n\nimpl Tool for Adder {\n    const NAME: &'static str = \"add\";\n    type Error = MathError;\n    type Args = AddArgs;\n    type Output = i32;\n\n\n    fn description(&self) -> String {\n        \"Add two integers together\".to_string()\n    }\n\n\n    fn parameters(&self) -> serde_json::Value {\n        json!({\n            \"type\": \"object\",\n            \"properties\": { \"a\": { \"type\": \"number\" }, \"b\": { \"type\": \"number\" } },\n            \"required\": [\"a\", \"b\"]\n        })\n    }\n\n\n    async fn call(&self, _ctx: &mut ToolContext, args: Self::Args) -> Result<i32, MathError> {\n        Ok(args.a + args.b)\n    }\n}\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .preamble(\"Use the add tool for arithmetic.\")\n        .tool(Adder)\n        .default_max_turns(2) // one turn to call the tool, one to answer\n        .build();\n\n\n    let answer = agent.prompt(\"What is 21 + 21?\").await?.output();\n    println!(\"{answer}\");\n    Ok(())\n}"
+  },
+  {
+    "lang": "text",
+    "text": "21 + 21 = 42."
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::extractor::ExtractorBuilder;\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse schemars::JsonSchema;\nuse serde::{Deserialize, Serialize};\n\n\n#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nstruct Person {\n    name: String,\n    /// The person's age in years, if stated.\n    age: Option<u8>,\n}\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let model = OpenAI::from_env()?.completion(openai::GPT_5_5);\n    let extractor = ExtractorBuilder::<Person>::new(model).build();\n\n\n    let person = extractor\n        .extract(\"Marie Curie was 66 years old when she passed away.\")\n        .await?\n        .output;\n\n\n    println!(\"{person:?}\");\n    Ok(())\n}"
+  },
+  {
+    "lang": "text",
+    "text": "Person { name: \"Marie Curie\", age: Some(66) }"
+  }
+]

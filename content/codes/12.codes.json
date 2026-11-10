@@ -1,0 +1,26 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::extractor::ExtractorBuilder;\nuse rig::providers::openai::{self, OpenAI};\nuse schemars::JsonSchema;\nuse serde::{Deserialize, Serialize};\n\n\n#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nstruct Person {\n    name: Option<String>,\n    age: Option<u8>,\n    profession: Option<String>,\n}\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let model = OpenAI::from_env()?.completion(openai::GPT_5_5);\n    let extractor = ExtractorBuilder::<Person>::new(model).build();\n\n\n    let person = extractor\n        .extract(\"John Doe is a 30 year old doctor.\")\n        .await?\n        .output;\n\n\n    println!(\"{person:?}\");\n    Ok(())\n}"
+  },
+  {
+    "lang": "text",
+    "text": "Person { name: Some(\"John Doe\"), age: Some(30), profession: Some(\"doctor\") }"
+  },
+  {
+    "lang": "rust",
+    "text": "let extractor = ExtractorBuilder::<Person>::new(model)\n    .append_preamble(\"Ages are given in years; ignore honorifics like 'Dr.'\")\n    .context(\"Doctors in this dataset are always medical doctors.\")\n    .max_tokens(512)\n    .retries(2)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "#[derive(Debug, Deserialize, schemars::JsonSchema)]\nstruct Forecast {\n    city: String,\n    temperature_c: f64,\n}\n\n\nlet forecast: Forecast = agent\n    .prompt_typed::<Forecast>(\"Make up a plausible forecast for Paris.\")\n    .max_turns(3)\n    .retries(1)\n    .await?\n    .output;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::StructuredOutputError;\n\n\nmatch extractor.extract(\"...\").await {\n    Ok(response) => { /* use response.output */ }\n    Err(StructuredOutputError::EmptyResponse) => {\n        eprintln!(\"the model did not produce structured data\");\n    }\n    Err(StructuredOutputError::Deserialization { output, error }) => {\n        eprintln!(\"unparseable output ({error}): {output}\");\n    }\n    Err(err) => return Err(err.into()),\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use futures::{StreamExt, TryStreamExt};\nuse rig::loaders::FileLoader;\n\n\nlet docs: Vec<String> = FileLoader::with_glob(\"notes/*.txt\")?\n    .read()\n    .ignore_errors()\n    .into_iter()\n    .collect();\n\n\nlet people: Vec<Person> = futures::stream::iter(&docs)\n    .map(|doc| async { extractor.extract(doc.as_str()).await.map(|r| r.output) })\n    .buffered(4)\n    .try_collect()\n    .await?;"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "example": "p39_001",
+    "exit": 0,
+    "scope": "construction only; no external requests"
+  },
+  {
+    "example": "p39_002",
+    "exit": 0,
+    "scope": "construction only; no external requests"
+  },
+  {
+    "example": "p39_003",
+    "exit": 0,
+    "scope": "construction only; no external requests"
+  },
+  {
+    "example": "p39_004",
+    "exit": 0,
+    "scope": "construction only; no external requests"
+  },
+  {
+    "example": "p43_003",
+    "exit": 0,
+    "scope": "construction only; no external requests"
+  },
+  {
+    "example": "p45_003",
+    "exit": 0,
+    "scope": "construction only; no external requests"
+  }
+]

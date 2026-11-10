@@ -1,0 +1,38 @@
+[
+  {
+    "lang": "mermaid",
+    "text": "sequenceDiagram\nparticipant User\nparticipant DiscordBot\nparticipant RigAgent\nUser->>DiscordBot: /ask or @mention\nDiscordBot->>RigAgent: question\nRigAgent->>RigAgent: retrieve docs + call model\nRigAgent->>DiscordBot: answer\nDiscordBot->>User: reply"
+  },
+  {
+    "lang": "bash",
+    "text": "cargo new discord_rig_bot\ncd discord_rig_bot\nmkdir documents"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = \"0.44.0\"\nserenity = \"0.12\"\ntokio = { version = \"1\", features = [\"full\"] }\nanyhow = \"1\""
+  },
+  {
+    "lang": "bash",
+    "text": "export DISCORD_TOKEN=your_discord_bot_token\nexport OPENAI_API_KEY=your_openai_api_key"
+  },
+  {
+    "lang": "rust",
+    "text": "use std::path::Path;\n\n\nuse anyhow::{Context, Result};\nuse rig::embeddings::EmbeddingsBuilder;\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse rig::vector_store::in_memory_store::InMemoryVectorStore;\n\n\nconst PREAMBLE: &str = \"\\\nYou are a helpful assistant in a Discord server. Answer questions using the documents \\\nprovided in your context, and say so when they do not cover the question. Keep answers \\\nshort: Discord messages are limited to 2000 characters. Format code as Markdown code \\\nblocks tagged with their language.\";\n\n\npub async fn build_agent(documents_dir: &Path) -> Result<Agent> {\n    let client = OpenAI::from_env()?;\n    let embedding_model = client.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\n    let documents = load_markdown(documents_dir)?;\n    let embeddings = EmbeddingsBuilder::new(embedding_model.clone())\n        .documents(documents)?\n        .build()\n        .await?;\n\n\n    let index = InMemoryVectorStore::from_documents(embeddings).index(embedding_model);\n\n\n    Ok(AgentBuilder::new(client.completion(openai::GPT_5_5))\n        .preamble(PREAMBLE)\n        .dynamic_context(2, index)\n        .build())\n}\n\n\nfn load_markdown(dir: &Path) -> Result<Vec<String>> {\n    let mut documents = Vec::new();\n    for entry in std::fs::read_dir(dir).with_context(|| format!(\"reading {}\", dir.display()))? {\n        let path = entry?.path();\n        if path.extension().is_some_and(|ext| ext == \"md\") {\n            let text = std::fs::read_to_string(&path)\n                .with_context(|| format!(\"reading {}\", path.display()))?;\n            documents.push(text);\n        }\n    }\n    Ok(documents)\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "let agent = rig_agent::build_agent(std::path::Path::new(\"documents\")).await?;\nlet answer = agent.prompt(\"What is this project about?\").await?.output();\nprintln!(\"{answer}\");"
+  },
+  {
+    "lang": "rust",
+    "text": "mod rig_agent;\n\n\nuse anyhow::Result;\nuse rig::prelude::*;\nuse serenity::all::{\n    async_trait, Command, CommandInteraction, CommandOptionType, Context, CreateCommand,\n    CreateCommandOption, EditInteractionResponse, EventHandler, GatewayIntents, Interaction,\n    Message, Ready,\n};\n\n\n/// Discord rejects messages longer than 2000 characters.\nfn truncate(text: String) -> String {\n    match text.char_indices().nth(1990) {\n        Some((cut, _)) => format!(\"{}…\", &text[..cut]),\n        None => text,\n    }\n}\n\n\nstruct Handler {\n    agent: Agent,\n}\n\n\nimpl Handler {\n    async fn answer(&self, question: &str) -> String {\n        match self.agent.prompt(question).await {\n            Ok(response) => truncate(response.output()),\n            Err(e) => {\n                eprintln!(\"agent error: {e}\");\n                \"Sorry, something went wrong while answering.\".to_string()\n            }\n        }\n    }\n\n\n    async fn ask(&self, ctx: &Context, command: &CommandInteraction) -> serenity::Result<()> {\n        command.defer(&ctx.http).await?;\n        let question = command\n            .data\n            .options\n            .first()\n            .and_then(|option| option.value.as_str())\n            .unwrap_or_default();\n        let answer = self.answer(question).await;\n        command\n            .edit_response(&ctx.http, EditInteractionResponse::new().content(answer))\n            .await?;\n        Ok(())\n    }\n}\n\n\n#[async_trait]\nimpl EventHandler for Handler {\n    async fn ready(&self, ctx: Context, ready: Ready) {\n        println!(\"{} is connected\", ready.user.name);\n        let ask = CreateCommand::new(\"ask\")\n            .description(\"Ask the bot a question\")\n            .add_option(\n                CreateCommandOption::new(CommandOptionType::String, \"query\", \"Your question\")\n                    .required(true),\n            );\n        if let Err(e) = Command::create_global_command(&ctx.http, ask).await {\n            eprintln!(\"failed to register /ask: {e}\");\n        }\n    }\n\n\n    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {\n        if let Interaction::Command(command) = interaction {\n            if command.data.name == \"ask\" {\n                if let Err(e) = self.ask(&ctx, &command).await {\n                    eprintln!(\"failed to answer /ask: {e}\");\n                }\n            }\n        }\n    }\n\n\n    async fn message(&self, ctx: Context, msg: Message) {\n        if msg.author.bot || !msg.mentions_me(&ctx).await.unwrap_or(false) {\n            return;\n        }\n        let mention = format!(\"<@{}>\", ctx.cache.current_user().id);\n        let question = msg.content.replace(&mention, \"\");\n        let _ = msg.channel_id.broadcast_typing(&ctx.http).await;\n        let answer = self.answer(question.trim()).await;\n        if let Err(e) = msg.channel_id.say(&ctx.http, answer).await {\n            eprintln!(\"failed to reply: {e}\");\n        }\n    }\n}\n\n\n#[tokio::main]\nasync fn main() -> Result<()> {\n    let token = std::env::var(\"DISCORD_TOKEN\")?;\n    let agent = rig_agent::build_agent(std::path::Path::new(\"documents\")).await?;\n\n\n    let intents = GatewayIntents::GUILDS\n        | GatewayIntents::GUILD_MESSAGES\n        | GatewayIntents::DIRECT_MESSAGES\n        | GatewayIntents::MESSAGE_CONTENT;\n    let mut client = serenity::Client::builder(&token, intents)\n        .event_handler(Handler { agent })\n        .await?;\n    client.start().await?;\n    Ok(())\n}"
+  },
+  {
+    "lang": "bash",
+    "text": "cargo run"
+  },
+  {
+    "lang": "rust",
+    "text": "let mut histories: HashMap<u64, Vec<Message>> = HashMap::new();\n\n\nlet history = histories.entry(channel_id).or_default();\nlet answer = agent.chat(\"And how do I configure it?\", history).await?.output();"
+  }
+]

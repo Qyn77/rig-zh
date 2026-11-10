@@ -1,0 +1,17 @@
+   Compiling reqwest v0.13.5
+   Compiling iana-time-zone v0.1.65
+   Compiling chrono v0.4.45
+   Compiling rig-reqwest v0.46.0
+   Compiling rig-core v0.46.0
+   Compiling rig-memory v0.46.0
+   Compiling rig-agent v0.46.0
+   Compiling rig v0.46.0
+   Compiling rig-guides-audit v0.1.0 (<temporary>/rig-guides-audit)
+    Finished `test` profile [unoptimized] target(s) in 53.59s
+     Running unittests examples/flight/main.rs (<temporary>/rig-guides-target/debug/examples/flight-d8c445c64280e993)
+
+running 1 test
+test flight_search_tool::tests::formats_empty_and_one_flight ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,22 @@
+[
+  {
+    "lang": "bash",
+    "text": "cargo add rig@=0.46.0\ncargo add tokio --features macros,rt-multi-thread"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = \"=0.46.0\"\ntokio = { version = \"1\", features = [\"macros\", \"rt-multi-thread\"] }"
+  },
+  {
+    "lang": "bash",
+    "text": "export OPENAI_API_KEY=\"sk-...\""
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"=0.46.0\", features = [\"qdrant\", \"fastembed\"] }"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"=0.46.0\", default-features = false, features = [\"agent\", \"derive\", \"reqwest\", \"native-tls\"] }"
+  }
+]

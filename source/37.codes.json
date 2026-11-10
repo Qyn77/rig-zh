@@ -1,0 +1,46 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\n// Reads OPENAI_API_KEY (and OPENAI_BASE_URL, if set).\nlet client = OpenAI::from_env()?;\n\n\nlet agent = AgentBuilder::new(client.completion(openai::GPT_5_5))\n    .preamble(\"You are a helpful assistant.\")\n    .build();\n\n\nlet answer = agent.prompt(\"Hello!\").await?.output();\nprintln!(\"{answer}\");"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{OpenAI, OpenAIConfig};\n\n\n// From OPENAI_API_KEY and the optional OPENAI_BASE_URL.\nlet client = OpenAI::from_env()?;\n\n\n// From an explicit key.\nlet client = OpenAI::new(\"your-api-key\");\n\n\n// From a configuration, for anything beyond the key.\nlet client = OpenAIConfig::new(\"your-api-key\")\n    .with_base_url(\"https://your-gateway.example.com/v1\")\n    .client();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{self, OpenAI};\n\n\nlet client = OpenAI::from_env()?;\n\n\nlet responses = client.completion(openai::GPT_5_5); // Responses API\nlet chat = client.chat(openai::GPT_5_5);            // Chat Completions"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{self, OpenAIConfig, Route};\n\n\nlet model = OpenAIConfig::from_env()?\n    .with_route(Route::Chat)\n    .client()\n    .completion(openai::GPT_5_5);"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::OpenAI;\n\n\nlet model = OpenAI::from_env()?.completion(\"gpt-5-mini\");"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::{CacheRetention, Effort, ServiceTier, Verbosity};\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .reasoning(Effort::High)          // reasoning.effort / reasoning_effort\n    .cache(CacheRetention::Long)      // extended prompt-cache retention\n    .service_tier(ServiceTier::Flex)  // service_tier\n    .verbosity(Verbosity::Low)        // text.verbosity / verbosity\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::extension::{ChatOptions, OpenAiOptions, ReasoningSummary};\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet options = OpenAiOptions::new()\n    .store(false)\n    .prompt_cache_key(\"support-bot\")\n    .reasoning_summary(ReasoningSummary::Auto)\n    .chat(ChatOptions::new().logprobs(true));\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .provider_option(options)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::CompletionRequest;\nuse rig::providers::openai::extension::OpenAiExt;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet model = OpenAI::from_env()?.completion(openai::GPT_5_5);\nlet response = model.call(CompletionRequest::new(\"Name a prime number.\")).await?;\n\n\nprintln!(\"{}\", response.text());\nif let Some(Ok(extras)) = response.extras::<OpenAiExt>() {\n    println!(\"served on tier {:?}\", extras.service_tier);\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{self, OpenAI};\n\n\nlet client = OpenAI::from_env()?;\n\n\n// The model's default width...\nlet embedder = client.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n// ...or a shorter vector, for models that support `dimensions`.\nlet small = client.embedding(openai::TEXT_EMBEDDING_3_LARGE, Some(256));"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"0.44.0\", features = [\"websocket\"] }"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::CompletionRequest;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet model = OpenAI::from_env()?.responses(openai::GPT_5_5);\nlet mut session = model.responses_websocket().connect().await?;\n\n\nlet first = session.completion(CompletionRequest::new(\"What is ownership in Rust?\")).await?;\nprintln!(\"{}\", first.text());\n\n\n// The session sends the previous response id for you.\nlet second = session.completion(CompletionRequest::new(\"And borrowing?\")).await?;\nprintln!(\"{}\", second.text());\n\n\nsession.close().await?;"
+  }
+]

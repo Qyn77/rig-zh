@@ -1,0 +1,14 @@
+[
+  {
+    "lang": "mermaid",
+    "text": "flowchart TB\n    App[\"Your app\"]\n    subgraph Facade[\"rig (facade)\"]\n      direction TB\n      Agent[\"rig-agent<br/>AgentBuilder · agent loop · hooks<br/>extraction · steppable runs\"]\n      Core[\"rig-core<br/>Model · DynModel · providers · messages<br/>tools · embeddings · memory · vector-store traits\"]\n      Integrations[\"feature-gated integrations<br/>rig::qdrant · rig::lancedb · rig::bedrock<br/>rig::tool::rmcp · rig::cassette · ...\"]\n    end\n    Transport[\"Transport<br/>reqwest (default) · your own HTTP client\"]\n    APIs[\"Provider APIs and databases\"]\n\n\n    App --> Facade\n    Agent --> Core\n    Integrations --> Core\n    Core --> Transport\n    Transport --> APIs"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"0.44.0\", features = [\"qdrant\", \"rmcp\"] }"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::http_client::{DynHttpClient, ReqwestClient};\n\n\nlet http = DynHttpClient::new(ReqwestClient::default());\nlet client = OpenAI::from_env()?.with_http(http);"
+  }
+]

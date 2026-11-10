@@ -1,0 +1,9 @@
+{
+  "counts": {
+    "pages": 52,
+    "code_blocks": 319,
+    "missing_image_notices": 17,
+    "compiled_rust_blocks": 230
+  },
+  "local_link_issues": []
+}

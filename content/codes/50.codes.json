@@ -1,0 +1,46 @@
+[
+  {
+    "lang": "text",
+    "text": "error[E0599]: no method named `agent` found for struct `OpenAI` in the current scope"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You are a helpful assistant.\")\n    .build();"
+  },
+  {
+    "lang": "text",
+    "text": "error: the `async` keyword is missing from the function declaration"
+  },
+  {
+    "lang": "bash",
+    "text": "cargo add tokio --features macros,rt-multi-thread"
+  },
+  {
+    "lang": "text",
+    "text": "Error: environment variable `OPENAI_API_KEY` is not set or is invalid"
+  },
+  {
+    "lang": "bash",
+    "text": "export OPENAI_API_KEY=\"sk-...\""
+  },
+  {
+    "lang": "rust",
+    "text": "let agent = AgentBuilder::new(model).default_max_turns(5).build();\n\n\n// or for one prompt\nlet answer = agent.prompt(\"What is 2 + 2, then times 3?\").max_turns(5).await?;"
+  },
+  {
+    "lang": "text",
+    "text": "Error: RequestError: `reasoning` is not supported by anthropic model `claude-haiku-4-5`: ..."
+  },
+  {
+    "lang": "toml",
+    "text": "rig = { version = \"=0.46.0\", default-features = false, features = [\"agent\", \"derive\", \"reqwest\", \"native-tls\"] }"
+  },
+  {
+    "lang": "text",
+    "text": "error[E0432]: unresolved import `rig::qdrant`"
+  },
+  {
+    "lang": "toml",
+    "text": "rig = { version = \"=0.46.0\", features = [\"qdrant\", \"pdf\", \"image\"] }"
+  }
+]

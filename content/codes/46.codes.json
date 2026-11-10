@@ -1,0 +1,18 @@
+[
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"=0.46.0\", features = [\"surrealdb\"] }\nsurrealdb = \"=3.2.5\"\ntokio = { version = \"1\", features = [\"full\"] }\nanyhow = \"1\"\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\""
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse serde::{Deserialize, Serialize};\nuse rig::providers::openai::{self, OpenAI};\nuse rig::surrealdb::{Mem, SurrealVectorStore};\nuse rig::vector_store::InsertDocuments;\nuse surrealdb::Surreal;\n\n\n#[derive(Embed, Serialize, Deserialize, Clone, Debug, Default)]\nstruct WordDefinition {\n    word: String,\n    #[embed]\n    definition: String,\n}\n\n\n#[tokio::main]\nasync fn main() -> Result<(), anyhow::Error> {\n    let model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\n    // In-memory instance; use `Surreal::new::<Ws>(\"localhost:8000\")` for a server.\n    let surreal = Surreal::new::<Mem>(()).await?;\n    surreal.use_ns(\"example\").use_db(\"example\").await?;\n\n\n    let words = vec![\n        WordDefinition { word: \"flurbo\".into(), definition: \"A fictional currency from Rick and Morty.\".into() },\n        WordDefinition { word: \"glarb-glarb\".into(), definition: \"A creature from the marshlands of Glibbo.\".into() },\n    ];\n    let documents = EmbeddingsBuilder::new(model.clone())\n        .documents(words)?\n        .build()\n        .await?;\n\n\n    let vector_store = SurrealVectorStore::with_defaults(model, surreal);\n    vector_store.insert_documents(documents).await?;\n\n\n    let req = VectorSearchRequest::builder()\n        .query(\"weird alien creature\")\n        .samples(2)\n        .build();\n\n\n    for result in vector_store.top_n::<WordDefinition>(req).await? {\n        println!(\"{:.3} {}\", result.score, result.document.word);\n    }\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "let req = VectorSearchRequest::builder()\n    .query(\"weird alien creature\")\n    .samples(1)\n    .threshold(0.5)\n    .build();\n\n\nlet results = vector_store.top_n::<WordDefinition>(req).await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{self, OpenAI};\nuse rig::surrealdb::{Mem, SurrealDistanceFunction, SurrealVectorStore};\nuse surrealdb::Surreal;\n\n\nlet model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\nlet surreal = Surreal::new::<Mem>(()).await?;\nsurreal.use_ns(\"example\").use_db(\"example\").await?;\n\n\nlet store = SurrealVectorStore::new(\n    model,\n    surreal,\n    Some(\"word_definitions\".into()),\n    SurrealDistanceFunction::Cosine,\n);"
+  }
+]

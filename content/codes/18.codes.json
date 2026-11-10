@@ -1,0 +1,22 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::loaders::FileLoader;\n\n\n// Glob: every Rust file in a directory, with each file's path.\nlet examples = FileLoader::with_glob(\"examples/*.rs\")?\n    .read_with_path()   // yields Result<(PathBuf, String), _>\n    .ignore_errors()\n    .into_iter();\n\n\n// Directory: every file directly inside a folder.\nlet dir_files = FileLoader::with_dir(\"data/\")?\n    .read()             // yields Result<String, _>\n    .ignore_errors();\n\n\n// Bytes: content from any source, e.g. a download.\nlet from_bytes = FileLoader::from_bytes(b\"hello\".to_vec());"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::loaders::FileLoader;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet model = OpenAI::from_env()?.completion(openai::GPT_5_5);\n\n\nlet agent = FileLoader::with_glob(\"examples/*.rs\")?\n    .read_with_path()\n    .ignore_errors()\n    .into_iter()\n    .fold(AgentBuilder::new(model), |builder, (path, content)| {\n        builder.context(format!(\"Rust example {path:?}:\\n{content}\"))\n    })\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::loaders::PdfFileLoader;\n\n\nlet pages = PdfFileLoader::with_glob(\"docs/*.pdf\")?\n    .load_with_path()   // yields Result<(PathBuf, Document), _>\n    .ignore_errors()\n    .by_page()          // each document's pages, numbered\n    .ignore_errors()    // yields (PathBuf, Vec<(usize, String)>)\n    .into_iter();\n\n\nfor (path, doc_pages) in pages {\n    for (page_no, text) in doc_pages {\n        println!(\"{} page {page_no}: {} chars\", path.display(), text.len());\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::loaders::epub::EpubLoaderError;\nuse rig::loaders::{EpubFileLoader, StripXmlProcessor};\n\n\nfn count_chapters() -> Result<(), EpubLoaderError> {\n    let chapters = EpubFileLoader::<_, StripXmlProcessor>::with_glob(\"books/*.epub\")?\n        .load_with_path()\n        .ignore_errors()\n        .by_chapter()       // yields (PathBuf, Vec<(usize, String)>)\n        .ignore_errors()\n        .into_iter();\n\n\n    for (path, book) in chapters {\n        println!(\"{}: {} chapters\", path.display(), book.len());\n    }\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::message::{DocumentMediaType, ImageMediaType, UserContent};\nuse rig::providers::anthropic::{self, Anthropic};\n\n\nlet agent = AgentBuilder::new(Anthropic::from_env()?.completion(anthropic::CLAUDE_SONNET_5_5))\n    .build();\n\n\nlet pdf = std::fs::read(\"report.pdf\")?;\nlet chart = std::fs::read(\"chart.png\")?;\n\n\nlet message = Message::User {\n    content: vec![\n        UserContent::text(\"Summarize the report and explain the chart.\"),\n        UserContent::document_raw(pdf, Some(DocumentMediaType::PDF)),\n        UserContent::image_raw(chart, Some(ImageMediaType::PNG), None),\n    ],\n};\n\n\nlet answer = agent.prompt(message).await?.output();\nprintln!(\"{answer}\");"
+  }
+]

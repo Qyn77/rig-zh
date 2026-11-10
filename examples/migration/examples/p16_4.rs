@@ -1,0 +1,16 @@
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    use rig::memory::{MemoryStore, load, save};
+    use rig::memory::recent::{view, LastMessages};
+    use rig::providers::openai::{self, OpenAI};
+    let store = MemoryStore::default();
+    let mut conversation = load(&store, "user-42")?;
+    let selected = view(conversation.messages(), &LastMessages(20)).to_vec();
+    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5)).build();
+    // Restrict only the request window; retain the full stored conversation.
+    let response = agent.prompt("Hello!").history(selected).await?;
+    println!("{}", response.output());
+    conversation.extend(response.messages);
+    save(&store, "user-42", &mut conversation)?;
+    Ok(())
+}

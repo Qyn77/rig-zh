@@ -1,0 +1,26 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[derive(rig::Embed, serde::Serialize, Clone)]\nstruct WordDefinition {\n    id: String,\n    word: String,\n    #[embed]\n    definitions: Vec<String>,\n}\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let client = OpenAI::from_env()?;\n    let embedding_model = client.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\n    // Ingestion: embed the documents and load them into an in-memory store.\n    let embeddings = EmbeddingsBuilder::new(embedding_model.clone())\n        .documents(vec![\n            WordDefinition {\n                id: \"doc0\".into(),\n                word: \"flurbo\".into(),\n                definitions: vec![\"A green alien that lives on cold planets.\".into()],\n            },\n            WordDefinition {\n                id: \"doc1\".into(),\n                word: \"glarb-glarb\".into(),\n                definitions: vec![\"An ancient farming tool from planet Jiro.\".into()],\n            },\n        ])?\n        .build()\n        .await?;\n    let index = InMemoryVectorStore::from_documents(embeddings).index(embedding_model);\n\n\n    // Retrieval: the agent fetches the best match for every prompt.\n    let agent = AgentBuilder::new(client.completion(openai::GPT_5_5))\n        .preamble(\"You are a dictionary assistant. Use the definitions provided as context.\")\n        .dynamic_context(1, index)\n        .build();\n\n\n    let answer = agent.prompt(\"What does \\\"glarb-glarb\\\" mean?\").await?.output();\n    println!(\"{answer}\");\n    Ok(())\n}"
+  },
+  {
+    "lang": "text",
+    "text": "\"Glarb-glarb\" is an ancient farming tool that comes from the planet Jiro."
+  },
+  {
+    "lang": "rust",
+    "text": "let req = VectorSearchRequest::builder()\n    .query(\"What type of money can I use in a fictional universe?\")\n    .samples(2)\n    .threshold(0.3) // optional: drop weak matches\n    .build();\n\n\nfor result in index.top_n::<WordDefinition>(req).await? {\n    println!(\"score={:.2} id={} word={}\", result.score, result.id, result.document.word);\n}"
+  },
+  {
+    "lang": "text",
+    "text": "score=0.81 id=doc0 word=flurbo"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::vector_store::request::{Filter, SearchFilter};\n\n\nlet req = VectorSearchRequest::builder()\n    .query(\"cold planets\")\n    .samples(5)\n    .filter(Filter::eq(\"word\", json!(\"flurbo\")))\n    .build();\nlet results = index.top_n::<serde_json::Value>(req).await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::operation::RerankRequest;\nuse rig::providers::voyageai::{self, VoyageAi};\n\n\n// Requires VOYAGE_API_KEY.\nlet reranker = VoyageAi::from_env()?.rerank(voyageai::RERANK_2_5);\n\n\nlet response = reranker\n    .call(RerankRequest {\n        query: \"Which animal lives on cold planets?\".into(),\n        documents: vec![\n            \"A glarb-glarb is an ancient farming tool.\".into(),\n            \"A flurbo is a green alien that lives on cold planets.\".into(),\n        ],\n    })\n    .await?;\n\n\nfor result in response.results {\n    println!(\"#{} scored {:.3}\", result.index, result.relevance_score);\n}"
+  }
+]

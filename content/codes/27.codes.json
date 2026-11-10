@@ -1,0 +1,34 @@
+[
+  {
+    "lang": "mermaid",
+    "text": "flowchart TD\n    User[User] -->|Query| Router[Router agent]\n    Router -->|rust| Rust[Rust agent]\n    Router -->|maths| Maths[Maths agent]\n    Rust --> Response\n    Maths --> Response"
+  },
+  {
+    "lang": "rust",
+    "text": "use std::collections::HashMap;\n\n\nlet openai = OpenAI::from_env()?;\nlet anthropic = Anthropic::from_env()?;\n\n\n// Specialists from different providers share the `Agent` type.\nlet routes: HashMap<&str, Agent> = HashMap::from([\n    (\n        \"rust\",\n        AgentBuilder::new(anthropic.completion(anthropic::CLAUDE_SONNET_5_5))\n            .preamble(\"You are an expert Rust programmer.\")\n            .build(),\n    ),\n    (\n        \"maths\",\n        AgentBuilder::new(openai.completion(openai::GPT_5_5))\n            .preamble(\"You are a mathematician who explains each step.\")\n            .build(),\n    ),\n]);\n\n\nlet router = AgentBuilder::new(openai.completion(openai::GPT_5_MINI))\n    .preamble(\n        \"Classify the user's question. Reply with exactly one word from: rust, maths. \\\n         No other text.\",\n    )\n    .build();\n\n\nlet question = \"How do I use async with Rust?\";\nlet topic = router.prompt(question).await?.output();\n\n\nlet Some(agent) = routes.get(topic.trim()) else {\n    anyhow::bail!(\"no route for {topic:?}\");\n};\nprintln!(\"{}\", agent.prompt(question).await?.output());"
+  },
+  {
+    "lang": "rust",
+    "text": "/// One route. The description and examples are embedded; `name` is the key.\n#[derive(Embed, Clone, Debug, Default, Serialize, Deserialize, Eq, PartialEq)]\nstruct Route {\n    name: String,\n    #[embed]\n    description: String,\n    #[embed]\n    examples: Vec<String>,\n}\n\n\nlet embedding_model = OpenAI::from_env()?\n    .embedding(openai::TEXT_EMBEDDING_3_SMALL, None)\n    .erase();\n\n\nlet routes = vec![\n    Route {\n        name: \"rust\".into(),\n        description: \"Programming and software development in Rust\".into(),\n        examples: vec![\n            \"How do I write an async function in Rust?\".into(),\n            \"Why does the borrow checker reject this code?\".into(),\n        ],\n    },\n    Route {\n        name: \"maths\".into(),\n        description: \"Mathematics, calculations and equations\".into(),\n        examples: vec![\"Solve this equation\".into(), \"What is 15% of 200?\".into()],\n    },\n];\n\n\nlet embeddings = EmbeddingsBuilder::new(embedding_model.clone())\n    .documents(routes)?\n    .build()\n    .await?;\nlet index = InMemoryVectorStore::from_documents(embeddings).index(embedding_model);\n\n\nlet request = VectorSearchRequest::builder()\n    .query(\"How do I use async with Rust?\")\n    .samples(1)\n    .build();\n\n\nlet route = index\n    .top_n::<Route>(request)\n    .await?\n    .into_iter()\n    .next()\n    .map_or_else(|| \"general\".to_owned(), |hit| hit.document.name);\nprintln!(\"route: {route}\");"
+  },
+  {
+    "lang": "rust",
+    "text": "/// Plan and call tools on the fast model; answer on the strong one.\n#[derive(Clone)]\nstruct FastThenStrong;\n\n\nimpl AgentHook for FastThenStrong {\n    fn on_model_select(\n        &self,\n        context: &HookContext,\n        _event: ModelSelection<'_>,\n    ) -> ModelSelectionAction {\n        // `turn()` is the one-based index of the model call in this run.\n        if context.turn() == 1 {\n            ModelSelectionAction::select(\"fast\")\n        } else {\n            ModelSelectionAction::select(\"strong\")\n        }\n    }\n}\n\n\nlet agent = AgentBuilder::named_model(\"fast\", OpenAI::from_env()?.completion(openai::GPT_5_MINI))\n    .model_route(\n        \"strong\",\n        Anthropic::from_env()?.completion(anthropic::CLAUDE_OPUS_5_5),\n    )\n    // .tool(search_tool) ...\n    .add_hook(FastThenStrong)\n    .build();\n\n\nlet answer = agent\n    .prompt(\"Research the question, then write a careful answer.\")\n    .max_turns(4)\n    .await?;\nprintln!(\"{answer}\");"
+  },
+  {
+    "lang": "rust",
+    "text": "let mut agent = AgentBuilder::named_model(\"fast\", OpenAI::from_env()?.completion(openai::GPT_5_MINI))\n    .model_route(\"strong\", OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .build();\n\n\n// One run: start from a registered label, or from a model value.\nlet hard = agent.prompt(\"Prove that sqrt(2) is irrational.\").using_model(\"strong\").await?;\nlet other = agent\n    .prompt(\"Say hello.\")\n    .using_model_value(Anthropic::from_env()?.completion(anthropic::CLAUDE_HAIKU_4_5))\n    .await?;\n\n\n// This agent value from now on: a registered label, or a new model.\nagent.set_model_label(\"strong\");\nagent.set_model(Anthropic::from_env()?.completion(anthropic::CLAUDE_SONNET_5_5));"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::catalog::Catalog;\n    use rig::providers::registry::ConnectOptions;\n    let model_name = \"anthropic/claude-sonnet-5-5\";\n    let api_key = std::env::var(\"ANTHROPIC_API_KEY\")?;\n    let model = Catalog::builtin().connect_with(\n        model_name, ConnectOptions::new().api_key(api_key),\n    )?;\n    let agent = rig::AgentBuilder::new(model)\n        .preamble(\"You are a helpful assistant.\").build();\n    println!(\"{}\", agent.prompt(\"Hello!\").await?.output());\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::catalog::Catalog;\n    // Persist the reference text, not the removed ProviderRef type.\n    let reference = \"deepseek/deepseek-v4-flash\";\n    let stored = serde_json::to_string(reference)?;\n    let restored: String = serde_json::from_str(&stored)?;\n    let model = Catalog::builtin().connect(&restored)?;\n    let _agent = rig::AgentBuilder::new(model).build();\n    assert_eq!(restored, reference);\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::catalog::Catalog;\n    use rig::providers::registry::ConnectOptions;\n    let catalog = Catalog::builtin();\n    let resolved = catalog.resolve(\"openai/gpt-5.5\")?;\n    let spec = resolved.spec;\n    println!(\"{}: {:?} token context, tools: {}\",\n        spec.display_name, spec.context_window, spec.tools);\n    if let Some(pricing) = &spec.pricing {\n        println!(\"${} / ${} per million input/output tokens\", pricing.input, pricing.output);\n    }\n    let model = catalog.connect_with(\"openai/gpt-5.5\",\n        ConnectOptions::new().api_key(std::env::var(\"OPENAI_API_KEY\")?))?;\n    let _agent = rig::AgentBuilder::new(model).build();\n    Ok(())\n}\n"
+  }
+]

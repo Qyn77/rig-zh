@@ -1,0 +1,30 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::agent::{AgentHook, DispatchAction, DispatchEvent, HookContext};\n\n\nstruct ToolAudit;\n\n\nimpl AgentHook for ToolAudit {\n    async fn on_dispatch(&self, _ctx: &HookContext, event: DispatchEvent<'_>) -> DispatchAction {\n        // `on_dispatch` fires for model calls too; only log tool calls.\n        if let (Some(name), Some(args)) = (event.tool_name(), event.tool_args()) {\n            println!(\"calling {name} with {args}\");\n        }\n        DispatchAction::proceed()\n    }\n}\n\n\n// Every run of this agent is audited...\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .add_hook(ToolAudit)\n    .build();\n\n\n// ...and this one run gets an extra hook on top.\nlet response = agent\n    .prompt(\"Check the account balance, then summarize it.\")\n    .max_turns(3)\n    .add_hook(ToolAudit)\n    .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::agent::{AgentHook, CompletionCallAction, CompletionCallEvent, HookContext, RequestPatch};\nuse rig::message::ToolChoice;\n\n\nstruct SearchFirst;\n\n\nimpl AgentHook for SearchFirst {\n    async fn on_completion_call(\n        &self,\n        ctx: &HookContext,\n        _event: CompletionCallEvent<'_>,\n    ) -> CompletionCallAction {\n        if ctx.turn() == 1 {\n            CompletionCallAction::patch(\n                RequestPatch::new()\n                    .active_tools([\"search_web\"])\n                    .tool_choice(ToolChoice::Required)\n                    .temperature(0.0),\n            )\n        } else {\n            CompletionCallAction::continue_run()\n        }\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::agent::{AgentHook, HookContext, ModelTurnAction, ModelTurnFinished};\nuse rig::completion::FinishReason;\n\n\n/// Ask for a shorter answer when the model ran out of output tokens, at most twice.\nstruct RetryTruncated;\n\n\n#[derive(Clone, Default)]\nstruct Retries(usize);\n\n\nimpl AgentHook for RetryTruncated {\n    async fn on_model_turn_finished(\n        &self,\n        ctx: &HookContext,\n        event: ModelTurnFinished<'_>,\n    ) -> ModelTurnAction {\n        if event.finish_reason != Some(&FinishReason::Length) {\n            return ModelTurnAction::continue_run();\n        }\n        let attempt = ctx.scratchpad().update(|retries: &mut Retries| {\n            retries.0 += 1;\n            retries.0\n        });\n        if attempt > 2 {\n            return ModelTurnAction::stop(\"response kept getting truncated\");\n        }\n        ModelTurnAction::retry_with_feedback(\"That was cut off. Answer again, more briefly.\")\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::agent::{AgentHook, DispatchAction, DispatchEvent, HookContext};\n\n\nstruct TransferPolicy {\n    max_auto_transfer: u64,\n}\n\n\nimpl AgentHook for TransferPolicy {\n    async fn on_dispatch(&self, _ctx: &HookContext, event: DispatchEvent<'_>) -> DispatchAction {\n        let (Some(tool_name), Some(args)) = (event.tool_name(), event.tool_args()) else {\n            return DispatchAction::proceed(); // not a tool call\n        };\n        if tool_name != \"transfer_funds\" {\n            return DispatchAction::proceed();\n        }\n\n\n        let amount = serde_json::from_str::<serde_json::Value>(args)\n            .ok()\n            .and_then(|v| v.get(\"amount\").and_then(|a| a.as_u64()));\n\n\n        match amount {\n            Some(n) if n <= self.max_auto_transfer => DispatchAction::proceed(),\n            Some(n) => DispatchAction::skip(format!(\n                \"denied by policy: ${n} exceeds the ${} automatic transfer limit\",\n                self.max_auto_transfer\n            )),\n            None => DispatchAction::skip(\"denied by policy: missing transfer amount\"),\n        }\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::agent::{AgentHook, HookContext, OutcomeAction, OutcomeEvent};\n\n\nstruct TruncateResults;\n\n\nimpl AgentHook for TruncateResults {\n    async fn on_outcome(&self, _ctx: &HookContext, event: OutcomeEvent<'_>) -> OutcomeAction {\n        let Some(result) = event.tool_result() else {\n            return OutcomeAction::proceed(); // a model response, or a failed call\n        };\n        let text = result.output().render();\n        if text.len() <= 4_000 {\n            return OutcomeAction::proceed();\n        }\n        let cut = text.char_indices().nth(4_000).map_or(text.len(), |(i, _)| i);\n        OutcomeAction::rewrite_tool_result(&event, format!(\"{}… [truncated]\", &text[..cut]))\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::agent::{\n    AgentHook, HookContext, InvalidToolCallAction, InvalidToolCallContext, InvalidToolCallReason,\n};\n\n\nstruct RepairDefaultApi;\n\n\nimpl AgentHook for RepairDefaultApi {\n    async fn on_invalid_tool_call(\n        &self,\n        _ctx: &HookContext,\n        event: &InvalidToolCallContext,\n    ) -> Option<InvalidToolCallAction> {\n        match event.reason {\n            InvalidToolCallReason::UnknownTool if event.tool_name == \"default_api\" => {\n                Some(InvalidToolCallAction::repair(\"search_web\"))\n            }\n            InvalidToolCallReason::UnknownTool => Some(InvalidToolCallAction::retry(format!(\n                \"Use one of these tools: {:?}\",\n                event.available_tools\n            ))),\n            _ => None,\n        }\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::agent::{AgentHook, DispatchAction, DispatchEvent, HookContext, StepEventKind};\n\n\nstruct ToolOnlyHook;\n\n\nimpl AgentHook for ToolOnlyHook {\n    fn observes(&self, kind: StepEventKind) -> bool {\n        matches!(kind, StepEventKind::ToolDispatch)\n    }\n\n\n    async fn on_dispatch(&self, _ctx: &HookContext, event: DispatchEvent<'_>) -> DispatchAction {\n        if let Some(name) = event.tool_name() {\n            println!(\"tool: {name}\");\n        }\n        DispatchAction::proceed()\n    }\n}"
+  }
+]

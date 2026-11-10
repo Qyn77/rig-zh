@@ -1,0 +1,26 @@
+   Compiling rig-optional-check v0.1.0 (<temporary>/rig-optional-audit/check)
+warning: unused import: `rig::prelude::*`
+ --> examples/p39_004.rs:1:5
+  |
+1 | use rig::prelude::*;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `serde_json::json`
+ --> examples/p39_004.rs:2:5
+  |
+2 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused variable: `client`
+ --> examples/p39_004.rs:8:5
+  |
+8 | let client = OpenAIConfig::with_key(&LLAMACPP, "")
+  |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_client`
+  |
+  = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `rig-optional-check` (example "p39_004") generated 3 warnings (run `cargo fix --example "p39_004" -p rig-optional-check` to apply 3 suggestions)
+    Finished `dev` profile [unoptimized] target(s) in 4.07s
+     Running `target/debug/examples/p39_004`

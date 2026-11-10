@@ -1,0 +1,26 @@
+   Compiling rig-optional-check v0.1.0 (<temporary>/rig-optional-audit/check)
+warning: unused import: `rig::prelude::*`
+ --> examples/p39_001.rs:1:5
+  |
+1 | use rig::prelude::*;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `serde_json::json`
+ --> examples/p39_001.rs:2:5
+  |
+2 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused variable: `agent`
+  --> examples/p39_001.rs:15:5
+   |
+15 | let agent = AgentBuilder::new(Ollama::new().native_completion(ollama::QWEN3))
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_agent`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `rig-optional-check` (example "p39_001") generated 3 warnings (run `cargo fix --example "p39_001" -p rig-optional-check` to apply 3 suggestions)
+    Finished `dev` profile [unoptimized] target(s) in 7.77s
+     Running `target/debug/examples/p39_001`

@@ -1,0 +1,26 @@
+[
+  {
+    "lang": "rust",
+    "text": "use futures::StreamExt;\nuse rig::agent::MultiTurnStreamItem;\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .preamble(\"You are a helpful assistant.\")\n        .build();\n\n\n    // Await the runner: run the loop to completion and get a `PromptResponse`.\n    let response = agent\n        .prompt(\"Find the answer and show your work.\")\n        .max_turns(5)\n        .await?;\n\n\n    println!(\"answer: {}\", response.output());\n    println!(\"model calls: {}\", response.completion_calls.len());\n    println!(\"tokens: {:?}\", response.usage.total_tokens);\n\n\n    // Or stream the same run: deltas and tool activity, then the final response.\n    let mut stream = agent.prompt(\"Now explain it to a child.\").max_turns(5).stream();\n    while let Some(item) = stream.next().await {\n        if let MultiTurnStreamItem::FinalResponse(done) = item? {\n            println!(\"\\n{}\", done.output());\n        }\n    }\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "let response = agent\n    .prompt(\"Write a haiku about the borrow checker.\")\n    .preamble(\"You are a poet. Answer with the poem only.\")\n    .temperature(1.0)\n    .max_tokens(200)\n    .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "let response = agent.prompt(\"What did I ask earlier?\").conversation(\"user-42\").await?;\n\n\nif let Some(append) = response.memory_append() {\n    if !append.is_acknowledged() {\n        eprintln!(\"answer is fine, but saving the turn failed: {:?}\", append.failure());\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "let response = agent\n    .prompt(\"Check inventory, shipping, and pricing.\")\n    .max_turns(3)\n    .tool_concurrency(3)\n    .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::ToolContext;\n\n\n#[derive(serde::Serialize, serde::Deserialize, rig::ContextValue)]\n#[context(key = \"tenant_id\")]\nstruct TenantId(String);\n\n\nlet mut context = ToolContext::new();\ncontext.insert(TenantId(\"acme\".into()))?;\n\n\nlet response = agent\n    .prompt(\"Update my account preferences.\")\n    .tool_context(context)\n    .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "let run: rig::AgentRun = serde_json::from_str(&saved)?;\nlet response = agent.resume(run).tool_concurrency(4).await?;"
+  }
+]

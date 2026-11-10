@@ -1,0 +1,22 @@
+[
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = \"0.44.0\"\nanyhow = \"1\"\ntokio = { version = \"1\", features = [\"macros\"] }\nserde = { version = \"1\", features = [\"derive\"] }"
+  },
+  {
+    "lang": "bash",
+    "text": "cargo add lambda_runtime"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\nfn build_entertainer() -> anyhow::Result<Agent> {\n    let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .preamble(\"You are a comedian here to entertain the user using humour and jokes.\")\n        .build();\n    Ok(agent)\n}\n\n\nasync fn entertain(agent: &Agent, prompt: &str) -> anyhow::Result<String> {\n    Ok(agent.prompt(prompt).await?.output())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use lambda_runtime::{run, service_fn, Error, LambdaEvent};\nuse serde::{Deserialize, Serialize};\n\n\n#[derive(Deserialize)]\nstruct Request {\n    prompt: String,\n}\n\n\n#[derive(Serialize)]\nstruct Response {\n    joke: String,\n}\n\n\n#[tokio::main]\nasync fn main() -> Result<(), Error> {\n    let agent = build_entertainer()?;\n    let agent = &agent;\n\n\n    run(service_fn(move |event: LambdaEvent<Request>| async move {\n        let joke = entertain(agent, &event.payload.prompt).await?;\n        Ok::<_, Error>(Response { joke })\n    }))\n    .await\n}"
+  },
+  {
+    "lang": "bash",
+    "text": "# Add your AWS credentials to your terminal\n# Create an AWS Lambda function named ‘rig-entertainer’ with architecture x86_64.\n\n\nfunction_name='rig-entertainer'\n\n\ncd rig-entertainer-lambda\ncargo lambda build --release # Can define different architectures here with --arm64 for example\ncargo lambda deploy $function_name # Since the name of the crate is the same as the lambda function name, no need to specify a binary file"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "lang": "toml",
+    "text": "[dev-dependencies]\nrig = { version = \"0.44.0\", features = [\"test-utils\"] }"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::test]\nasync fn my_agent_test() -> anyhow::Result<()> {\n    // snippet goes here\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::test_utils::MockCompletionModel;\n\n\nlet model = MockCompletionModel::text(\"Hello from a mocked model!\");\nlet agent = AgentBuilder::new(model).preamble(\"You are friendly.\").build();\n\n\nlet reply = agent.prompt(\"Hi\").await?;\n\n\nassert_eq!(reply.output(), \"Hello from a mocked model!\");"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::test_utils::{MockAddTool, MockCompletionModel, MockTurn};\n\n\nlet model = MockCompletionModel::from_turns([\n    // Turn 1: the model asks to call the `add` tool.\n    MockTurn::tool_call(\"call_1\", \"add\", json!({ \"x\": 2, \"y\": 3 })),\n    // Turn 2: after seeing the tool result, it answers.\n    MockTurn::text(\"2 + 3 = 5\"),\n]);\nlet probe = model.clone();\n\n\n// Attach your real tool here; `MockAddTool` is a ready-made one.\nlet agent = AgentBuilder::new(model).tool(MockAddTool).build();\nlet answer = agent.prompt(\"What is 2 + 3?\").max_turns(3).await?;\n\n\nassert_eq!(answer.output(), \"2 + 3 = 5\");\nassert_eq!(probe.request_count(), 2); // the loop called the model twice"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::test_utils::MockCompletionModel;\n\n\nlet model = MockCompletionModel::text(\"ok\");\nlet probe = model.clone();\n\n\nlet agent = AgentBuilder::new(model).preamble(\"You are a pirate.\").build();\nagent.prompt(\"Ahoy\").await?;\n\n\nlet sent = probe.requests();\nassert_eq!(sent.len(), 1);\nassert_eq!(sent[0].system_instructions(), Some(\"You are a pirate.\"));"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::test_utils::{sent_documents, MockCompletionModel, MockEmbeddings};\n\n\nlet embeddings = EmbeddingsBuilder::new(MockEmbeddings::model())\n    .documents([\"a green alien\", \"an ancient farming tool\"])?\n    .build()\n    .await?;\nlet index = InMemoryVectorStore::from_documents(embeddings).index(MockEmbeddings::model());\n\n\nlet model = MockCompletionModel::text(\"ok\");\nlet probe = model.clone();\nlet agent = AgentBuilder::new(model).dynamic_context(2, index).build();\nagent.prompt(\"What is a flurbo?\").await?;\n\n\n// Both documents were retrieved and sent as context.\nassert_eq!(sent_documents(&probe.requests()[0]).len(), 2);"
+  }
+]

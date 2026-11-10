@@ -1,0 +1,34 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::completion::CompletionRequest;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet model = OpenAI::from_env()?.completion(openai::GPT_5_5);\n\n\nlet request = CompletionRequest::new(\"What is the Rust programming language?\")\n    .preamble(\"You are a helpful assistant.\")\n    .temperature(0.7)\n    .max_tokens(1000);\n\n\nlet response = model.call(request).await?;\nprintln!(\"{}\", response.text());"
+  },
+  {
+    "lang": "rust",
+    "text": "let mut history = vec![\n    Message::user(\"My name is Ferris.\"),\n    Message::assistant(\"Nice to meet you, Ferris!\"),\n];\n\n\nlet prompt = Message::user(\"What's my name?\");\nlet response = model\n    .call(CompletionRequest::new(prompt.clone()).messages(history.clone()))\n    .await?;\n\n\nhistory.push(prompt);\nhistory.extend(response.message());"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::{CacheRetention, CompletionRequest, Effort, ServiceTier};\n\n\nlet request = CompletionRequest::new(\"Plan the refactor of the parser module.\")\n    .reasoning(Effort::High)\n    .cache(CacheRetention::Long)\n    .service_tier(ServiceTier::Flex)\n    .seed(7);\n\n\nlet response = model.call(request).await?;\nprintln!(\"{}\", response.reasoning());"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::anthropic::{self, Anthropic};\nuse rig::providers::anthropic::extension::{AnthropicExt, AnthropicOptions};\n\n\nlet model = Anthropic::from_env()?.completion(anthropic::CLAUDE_SONNET_5_5);\n\n\nlet request = CompletionRequest::new(\"Name three Rust web frameworks.\")\n    .provider_option(AnthropicOptions::default().top_k(40));\n\n\nlet response = model.call(request).await?;\nlet extras = response.extras_lossy::<AnthropicExt>();\nprintln!(\"stop reason: {:?}, tier: {:?}\", extras.stop_reason, extras.service_tier);"
+  },
+  {
+    "lang": "rust",
+    "text": "let response = model.call(CompletionRequest::new(\"Write a long poem.\").max_tokens(50)).await?;\n\n\nmatch response.finish_reason() {\n    Some(FinishReason::Length) => println!(\"cut off: raise max_tokens\"),\n    Some(FinishReason::ContentFilter) => println!(\"filtered by the provider\"),\n    Some(FinishReason::Other(raw)) => println!(\"provider said: {raw}\"),\n    _ => println!(\"{}\", response.text()),\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "let response = model.call(CompletionRequest::new(\"Hi\")).await?;\nlet usage = &response.usage;\n\n\nprintln!(\n    \"in: {}, out: {}, cached: {:?}\",\n    usage.input_tokens.unwrap_or(0),\n    usage.output_tokens.unwrap_or(0),\n    usage.cached_input_tokens,\n);"
+  },
+  {
+    "lang": "rust",
+    "text": "use futures::StreamExt;\nuse rig::completion::CompletionRequest;\nuse rig::streaming::{Item, StreamEvent};\n\n\nlet mut stream = model.stream(CompletionRequest::new(\"Tell me a short story.\"))?;\n\n\nwhile let Some(item) = stream.next().await {\n    if let Item::Event(StreamEvent::Text { text, .. }) = item? {\n        print!(\"{text}\");\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::{CompletionRequest, CompletionResponse};\nuse rig::operation::Completion;\n\n\nasync fn summarize(model: &DynModel<Completion>, text: &str) -> Result<String, ProviderError> {\n    let request = CompletionRequest::new(format!(\"Summarize:\\n\\n{text}\"));\n    let response: CompletionResponse = model.call(request).await?;\n    Ok(response.text())\n}"
+  }
+]

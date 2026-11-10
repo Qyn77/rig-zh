@@ -1,0 +1,18 @@
+[
+  {
+    "lang": "toml",
+    "text": "rig = { version = \"=0.46.0\", features = [\"cassette\"] }"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::cassette::agent::AgentReplayExt;\n    use rig::cassette::effect_log::EffectLogRecorder;\n    use rig::providers::openai::{self, OpenAI};\n    let recorder = EffectLogRecorder::new();\n    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .owner(\"replay-example\")\n        .preamble(\"You are a helpful assistant.\")\n        .record_to(recorder.clone()).build();\n    let response = agent.prompt(\"Name three Rust web frameworks.\").await?;\n    println!(\"{}\", response.output());\n    let log = agent.stamp(recorder.take());\n    std::fs::write(\"frameworks.effects.json\", serde_json::to_string_pretty(&log)?)?;\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::handlers::Handlers;\n    use rig::cassette::agent::replay::register_all;\n    use rig::cassette::effect_log::EffectLog;\n    use rig::effect::EffectFamily;\n    let log: EffectLog = serde_json::from_str(&std::fs::read_to_string(\"frameworks.effects.json\")?)?;\n    let handlers = Handlers::default();\n    register_all(&log, &handlers)?;\n    let model_key = log.iter().find(|r| r.kind.family() == EffectFamily::Completion)\n        .ok_or_else(|| anyhow::anyhow!(\"no completion record\"))?.key.clone();\n    let agent = rig::AgentBuilder::over_handlers(handlers, \"replay-example\", model_key)\n        .preamble(\"You are a helpful assistant.\").build();\n    let response = agent.prompt(\"Name three Rust web frameworks.\").await?;\n    println!(\"{}\", response.output());\n    Ok(())\n}\n"
+  },
+  {
+    "lang": "rust",
+    "text": "#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    use rig::handlers::Handlers;\n    use rig::cassette::agent::replay::register_all;\n    use rig::cassette::effect_log::{EffectLog, EffectLogReplayer};\n    use rig::effect::EffectFamily;\n    use rig::tool::{RegisteredTool, server::ToolServer};\n    let log: EffectLog = serde_json::from_str(&std::fs::read_to_string(\"frameworks.effects.json\")?)?;\n    let handlers = Handlers::default();\n    register_all(&log, &handlers)?;\n    let tools = ToolServer::new().run();\n    let mut seen = std::collections::BTreeSet::new();\n    for record in log.iter().filter(|r| r.kind.family() == EffectFamily::Tool) {\n        if seen.insert(record.key.to_string()) {\n            let replayer = EffectLogReplayer::for_key(&log, &record.key)?;\n            tools.add_registered_tool(RegisteredTool::from_handler(replayer)?);\n        }\n    }\n    let model_key = log.iter().find(|r| r.kind.family() == EffectFamily::Completion)\n        .ok_or_else(|| anyhow::anyhow!(\"no completion record\"))?.key.clone();\n    let agent = rig::AgentBuilder::over_handlers(handlers, \"replay-example\", model_key)\n        .preamble(\"You are a helpful assistant.\")\n        .tool_server_handle(tools).build();\n    println!(\"{}\", agent.prompt(\"Name three Rust web frameworks.\").max_turns(4).await?.output());\n    Ok(())\n}\n"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{self, OpenAI};\n\n\n// Read OPENAI_API_KEY (and the optional OPENAI_BASE_URL).\nlet client = OpenAI::from_env()?;\n\n\n// Or pass the key yourself.\nlet client = OpenAI::new(\"sk-...\");\n\n\n// Build models from the client.\nlet gpt = client.completion(openai::GPT_5_5);\nlet embedder = client.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::anthropic::{self, Anthropic};\nuse rig::providers::ollama::Ollama;\n\n\nlet claude = Anthropic::from_env()?.completion(anthropic::CLAUDE_SONNET_5_5);\n\n\n// Ollama on localhost:11434, no key needed.\nlet llama = Ollama::new().completion(\"llama3.2\");"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::{deepseek, groq, openrouter};\n\n\nlet deepseek = deepseek::from_env()?.completion(deepseek::DEEPSEEK_V4_FLASH);\nlet groq = groq::from_env()?.completion(groq::LLAMA_3_3_70B_VERSATILE);\nlet router = openrouter::from_env()?.completion(\"anthropic/claude-sonnet-5-5\");"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::OpenAIConfig;\n\n\nlet local = OpenAIConfig::new(\"not-needed\")\n    .with_base_url(\"http://localhost:8000/v1\")\n    .client();\n\n\nlet model = local.chat(\"my-model\");"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::http_client::ReqwestClient;\nuse rig::providers::openai::OpenAI;\nuse rig::rig_reqwest::reqwest;\n\n\nlet http = reqwest::Client::builder()\n    .timeout(std::time::Duration::from_secs(60))\n    .build()?;\n\n\nlet client = OpenAI::from_env()?.with_http(ReqwestClient::from(http));"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::operation::Completion;\nuse rig::providers::anthropic::{self, Anthropic};\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet models: Vec<DynModel<Completion>> = vec![\n    OpenAI::from_env()?.completion(openai::GPT_5_5).into(),\n    Anthropic::from_env()?.completion(anthropic::CLAUDE_SONNET_5_5).into(),\n];"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::registry::ProviderRef;\n\n\nlet reference = ProviderRef::parse(\"deepseek:deepseek-v4-flash\")?;\nlet model = reference.completion_model()?; // a DynModel<Completion>"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::anthropic::Anthropic;\n\n\nlet client = Anthropic::from_env()?;\nclient.verify().await?;\n\n\nfor model in client.list_models().await?.iter() {\n    println!(\"{} ({})\", model.id, model.display_name());\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::catalog::Catalog;\n\n\nif let Some(spec) = Catalog::builtin().resolve(\"anthropic/claude-haiku-4-5\") {\n    println!(\"context window: {:?}\", spec.context_window);\n}"
+  }
+]

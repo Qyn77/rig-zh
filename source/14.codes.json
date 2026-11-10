@@ -1,0 +1,34 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    // Requires the OPENAI_API_KEY environment variable.\n    let model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\n    let embeddings = EmbeddingsBuilder::new(model)\n        .document(\"Some text\")?\n        .document(\"More text\")?\n        .build()\n        .await?;\n\n\n    println!(\"Generated {} embeddings\", embeddings.len());\n    Ok(())\n}"
+  },
+  {
+    "lang": "text",
+    "text": "Generated 2 embeddings"
+  },
+  {
+    "lang": "rust",
+    "text": "let model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\nlet vector: Vec<f64> = model.embed_text(\"What is Rig?\").await?.vec;\nprintln!(\"{} dimensions\", vector.len());"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::Embed;\n\n\n#[derive(Embed)]\nstruct WordDefinition {\n    id: String,\n    word: String,\n    #[embed]\n    definitions: Vec<String>,\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::embeddings::{Embed, EmbedError, TextEmbedder};\n\n\nstruct WordDefinition {\n    id: String,\n    word: String,\n    definition: String,\n}\n\n\nimpl Embed for WordDefinition {\n    fn embed(&self, embedder: &mut TextEmbedder) -> Result<(), EmbedError> {\n        // Embed the word together with its definition.\n        embedder.embed(format!(\"{}: {}\", self.word, self.definition));\n        Ok(())\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "#[derive(rig::Embed, serde::Serialize, Clone)]\nstruct Doc {\n    id: String,\n    #[embed]\n    text: String,\n}\n\n\nlet documents = vec![\n    Doc { id: \"doc0\".into(), text: \"Rig is a Rust library for LLM apps.\".into() },\n    Doc { id: \"doc1\".into(), text: \"Embeddings map text to vectors.\".into() },\n];\n\n\nlet model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\nlet embeddings = EmbeddingsBuilder::new(model)\n    .documents(documents)?\n    .build()\n    .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "// In memory, keyed by generated ids (\"doc0\", \"doc1\", ...).\nlet store = InMemoryVectorStore::from_documents(embeddings);\n\n\n// Turn the store into a searchable index with the same embedding model.\nlet index = store.index(model);"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::vector_store::InsertDocuments;\n\n\nstore.insert_documents(embeddings).await?;"
+  }
+]

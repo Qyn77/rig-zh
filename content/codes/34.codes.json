@@ -1,0 +1,34 @@
+[
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"=0.46.0\", features = [\"lancedb\"] }\nlancedb = { version = \"=0.30.0\", features = [\"aws\", \"dynamodb\"] }\ntokio = { version = \"1\", features = [\"macros\", \"rt-multi-thread\"] }\nanyhow = \"1\"\n# Keep the AWS SDK dependency graph compatible with aws-smithy-json 0.63.\naws-smithy-types = \"=1.6.3\""
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::lancedb::{LanceDbVectorIndex, SearchParams};\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\n\n\nasync fn build_agent(db_uri: &str) -> anyhow::Result<Agent> {\n    let openai_client = OpenAI::from_env()?;\n    let embedding_model = openai_client\n        .embedding(openai::TEXT_EMBEDDING_3_SMALL, None)\n        .erase();\n\n\n    // e.g. \"s3://rig-montreal-lancedb\", \"/tmp\", or \"/mnt/efs\"\n    let db = lancedb::connect(db_uri).execute().await?;\n    let table = db.open_table(\"montreal_open_data\").execute().await?;\n\n\n    // The query embedding model must match the one the loader used.\n    let index =\n        LanceDbVectorIndex::new(table, embedding_model, \"id\", SearchParams::default()).await?;\n\n\n    let agent = AgentBuilder::new(openai_client.completion(openai::GPT_5_5))\n        .preamble(\"You answer questions about the City of Montreal's open data catalog.\")\n        .dynamic_context(3, index)\n        .build();\n    Ok(agent)\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "// Note: Create s3://rig-montreal-lancedb bucket beforehand\nlet db = lancedb::connect(\"s3://rig-montreal-lancedb\").execute().await?;\n// OR\nlet db = lancedb::connect(\"s3+ddb://rig-montreal-lancedb?ddbTableName=my-dynamodb-table\").execute().await?;"
+  },
+  {
+    "lang": "bash",
+    "text": "# Lambda that writes to the store\ncargo lambda build --release --bin loader\ncargo lambda deploy --binary-name loader <your_loader_function_name>\n\n\n# Lambda that reads to the store\ncargo lambda build --release --bin app\ncargo lambda deploy --binary-name app <your_app_function_name>"
+  },
+  {
+    "lang": "rust",
+    "text": "let db = lancedb::connect(\"/tmp\").execute().await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "let db = lancedb::connect(\"/mnt/efs\").execute().await?;"
+  },
+  {
+    "lang": "bash",
+    "text": "# Can also do this directly on the AWS console\naws s3api create-bucket --bucket <your_bucket_name>\n\n\ncargo lambda build --release --bin loader\ncargo lambda build --release --bin app\n\n\ncd target/lambda/loader\nzip -r bootstrap.zip bootstrap\n# Can also do this directly on the AWS console\naws s3 cp bootstrap.zip s3://<your_bucket_name>/rig/loader/\n\n\ncd ../app\nzip -r bootstrap.zip bootstrap\n# Can also do this directly on the AWS console\naws s3 cp bootstrap.zip s3://<your_bucket_name>/rig/app/"
+  },
+  {
+    "lang": "sql",
+    "text": "filter @type = \"REPORT\"\n| stats\n      avg(@maxMemoryUsed) / 1000000 as MemoryUsageMB,\n      avg(@duration) / 1000 as AvgDurationSec,\n      max(@duration) / 1000 as MaxDurationSec,\n      min(@duration) / 1000 as MinDurationSec,\n      avg(@initDuration) / 1000 as AvgColdStartTimeSec,\n      count(*) as NumberOfInvocations,\n      sum(@initDuration > 0) as ColdStartInvocations\nby bin(1d) as TimeRange, @memorySize / 1000000 as MemoryConfigurationMB"
+  }
+]

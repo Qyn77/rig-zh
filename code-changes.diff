@@ -1,0 +1,1129 @@
+--- official/01/0
++++ rig-0.46.0/01/0
+@@ -1,2 +1,2 @@
+-cargo add rig
++cargo add rig@=0.46.0
+ cargo add tokio --features macros,rt-multi-thread--- official/01/1
++++ rig-0.46.0/01/1
+@@ -1,3 +1,3 @@
+ [dependencies]
+-rig = "0.44.0"
++rig = "=0.46.0"
+ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }--- official/01/3
++++ rig-0.46.0/01/3
+@@ -1,2 +1,2 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["qdrant", "fastembed"] }+rig = { version = "=0.46.0", features = ["qdrant", "fastembed"] }--- official/01/4
++++ rig-0.46.0/01/4
+@@ -1,2 +1,2 @@
+ [dependencies]
+-rig = { version = "0.44.0", default-features = false, features = ["agent", "derive", "reqwest", "native-tls"] }+rig = { version = "=0.46.0", default-features = false, features = ["agent", "derive", "reqwest", "native-tls"] }--- official/02/1
++++ rig-0.46.0/02/1
+@@ -1,2 +1,2 @@
+-cargo add rig anyhow
++cargo add rig@=0.46.0 anyhow
+ cargo add tokio --features macros,rt-multi-thread--- official/03/1
++++ rig-0.46.0/03/1
+@@ -1,2 +1,2 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["qdrant", "rmcp"] }+rig = { version = "=0.46.0", features = ["qdrant", "rmcp"] }--- official/03/2
++++ rig-0.46.0/03/2
+@@ -2,4 +2,4 @@
+ 
+ 
+ let http = DynHttpClient::new(ReqwestClient::default());
+-let client = OpenAI::from_env()?.with_http(http);+let client = rig::providers::openai::OpenAIConfig::from_env()?.connect(http);--- official/05/4
++++ rig-0.46.0/05/4
+@@ -8,4 +8,4 @@
+     .build()?;
+ 
+ 
+-let client = OpenAI::from_env()?.with_http(ReqwestClient::from(http));+let client = rig::providers::openai::OpenAIConfig::from_env()?.connect(ReqwestClient::from(http));--- official/05/6
++++ rig-0.46.0/05/6
+@@ -1,5 +1,8 @@
+-use rig::providers::registry::ProviderRef;
+-
+-
+-let reference = ProviderRef::parse("deepseek:deepseek-v4-flash")?;
+-let model = reference.completion_model()?; // a DynModel<Completion>+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::catalog::Catalog;
++    // Credentials are read from DEEPSEEK_API_KEY; constructing does not call the provider.
++    let model = Catalog::builtin().connect("deepseek/deepseek-v4-flash")?;
++    let _agent = rig::AgentBuilder::new(model).build();
++    Ok(())
++}
+--- official/05/8
++++ rig-0.46.0/05/8
+@@ -1,6 +1,7 @@
+-use rig::catalog::Catalog;
+-
+-
+-if let Some(spec) = Catalog::builtin().resolve("anthropic/claude-haiku-4-5") {
+-    println!("context window: {:?}", spec.context_window);
+-}+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::catalog::Catalog;
++    let resolved = Catalog::builtin().resolve("anthropic/claude-haiku-4-5")?;
++    println!("context window: {:?}", resolved.spec.context_window);
++    Ok(())
++}
+--- official/08/2
++++ rig-0.46.0/08/2
+@@ -1,8 +1,25 @@
+-let response = agent.prompt("What did I ask earlier?").conversation("user-42").await?;
++use rig::{AgentBuilder, completion::PromptError};
++use rig::memory::MemoryStore;
++use rig::providers::openai::{self, OpenAI};
+ 
+-
+-if let Some(append) = response.memory_append() {
+-    if !append.is_acknowledged() {
+-        eprintln!("answer is fine, but saving the turn failed: {:?}", append.failure());
++#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))
++        .memory(MemoryStore::default()).build();
++    match agent.prompt("What did I ask earlier?").conversation("user-42").await {
++        Ok(response) => println!("{}", response.output()),
++        Err(error) => {
++            if let PromptError::Memory { error: store_error, response } = &error {
++                eprintln!("conversation persistence failed: {store_error}");
++                if let Some(finished) = response {
++                    eprintln!("finished answer (save not confirmed): {}", finished.output());
++                    // Recover/reconcile persistence; do not repeat a tool-using run blindly.
++                } else {
++                    eprintln!("history could not be loaded; the model was not called");
++                }
++            }
++            return Err(error.into());
++        }
+     }
+-}+    Ok(())
++}
+--- official/10/0
++++ rig-0.46.0/10/0
+@@ -1,99 +1,86 @@
+ use std::collections::BTreeSet;
+ use std::io::BufRead;
++use rig::completion::CompletionRequest;
++use rig::providers::openai::{self, OpenAI};
++use rig::run::{AgentRun, AgentRunStep, ModelTurn, ModelTurnOutcome, InvalidToolCallAction, PendingToolCall, TurnPolicy};
++use rig::tool::{ToolSet, ToolContext, ToolExecutionError, ToolResult};
+ 
++static EXECUTIONS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+ 
+-use rig::completion::CompletionRequest;
+-use rig::message::{ToolResultContent, UserContent};
+-use rig::prelude::*;
+-use rig::providers::openai::{self, OpenAI};
+-use rig::run::{AgentRun, AgentRunStep, ModelTurn, ModelTurnOutcome};
+-use rig::run::InvalidToolCallAction;
+-use rig::tool::ToolSet;
+-
+-
+-const PREAMBLE: &str = "You are a banking assistant. Use the tools to carry out the request.";
+-
++// Demonstration only: no bank or payment service is called.
++#[rig::rig_tool(description = "Simulate a transfer; never moves real money")]
++fn transfer_funds(account: String, amount: u64) -> Result<String, ToolExecutionError> {
++    EXECUTIONS.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
++    Ok(format!("SIMULATED: transferred ${amount} to {account}"))
++}
+ 
+ #[tokio::main]
+ async fn main() -> anyhow::Result<()> {
+-    let model = OpenAI::from_env()?.completion(openai::GPT_5_5);
++    use rig::test_utils::{MockCompletionModel, MockTurn};
++    let offline = std::env::args().any(|arg| arg == "--offline");
++    let model = if offline {
++        MockCompletionModel::from_turns([
++            MockTurn::tool_call("call-1", "transfer_funds", serde_json::json!({"account":"B-2", "amount":500})),
++            MockTurn::text("The simulated transfer was reviewed."),
++        ]).erase()
++    } else {
++        OpenAI::from_env()?.completion(openai::GPT_5_5).erase()
++    };
+     let mut tools = ToolSet::default();
+     tools.add_tool(TransferFunds);
+     let definitions = tools.tool_definitions();
+-    let tool_names: BTreeSet<String> = definitions.iter().map(|d| d.name.to_string()).collect();
++    let names: BTreeSet<String> = definitions.iter().map(|d| d.name.to_string()).collect();
++    let policy = TurnPolicy::new(names, None, None)?;
+     let checkpoint = std::path::Path::new("run.json");
+-
+-
+-    let mut run = AgentRun::new("Transfer $500 to account B-2.").max_turns(4);
+-
+-
++    let mut run = AgentRun::new("Simulate transferring $500 to account B-2.").max_turns(4);
++    let mut approved = 0;
+     loop {
+         match run.next_step()? {
+             AgentRunStep::CallModel { prompt, history, .. } => {
+-                let response = model
+-                    .call(
+-                        CompletionRequest::new(prompt)
+-                            .messages(history)
+-                            .preamble(PREAMBLE.to_string())
+-                            .tools(definitions.clone()),
+-                    )
+-                    .await?;
+-                let turn =
+-                    ModelTurn::from_response_parts(&response, tool_names.clone(), tool_names.clone());
+-                let mut outcome = run.model_response(turn)?;
++                let response = model.call(CompletionRequest::new(prompt)
++                    .messages(history)
++                    .preamble("You are a demonstration banking assistant. Use the simulation tool.")
++                    .tools(definitions.clone())).await?;
++                let mut outcome = run.model_response(ModelTurn::from_policy(&response, policy.clone()))?;
+                 while let ModelTurnOutcome::NeedsResolution(_) = outcome {
+                     outcome = run.resolve_invalid_tool_call(InvalidToolCallAction::fail())?;
+                 }
+             }
+-
+-
+             AgentRunStep::CallTools { .. } => {
+-                // Pause: persist the whole run while its tool calls wait for a decision.
+                 std::fs::write(checkpoint, serde_json::to_vec(&run)?)?;
+-
+-
+-                // ...later, possibly in another process: load it and get the calls back.
+                 let mut resumed: AgentRun = serde_json::from_slice(&std::fs::read(checkpoint)?)?;
+                 let AgentRunStep::CallTools { calls } = resumed.next_step()? else {
+-                    anyhow::bail!("a resumed run re-emits its pending tool calls");
++                    anyhow::bail!("expected pending calls after resume");
+                 };
+-
+-
+-                let mut results = Vec::new();
+-                for call in calls {
+-                    // Calls already answered by invalid-call recovery must not run.
+-                    if let Some(result) = call.preresolved_result {
+-                        results.push(result);
+-                        continue;
++                let mut answers = Vec::new();
++                for pending in calls {
++                    match pending {
++                        PendingToolCall::Execute(call) => {
++                            println!("approve {}({})? [y/N]", call.name(), call.arguments());
++                            let mut answer = String::new();
++                            std::io::stdin().lock().read_line(&mut answer)?;
++                            let result = if answer.trim() == "y" {
++                                approved += 1;
++                                tools.execute(call.name(), call.arguments().to_string(), &mut ToolContext::new()).await
++                            } else {
++                                ToolResult::skipped("denied by the reviewer")
++                            };
++                            answers.push(call.answer(result));
++                        }
++                        PendingToolCall::Malformed(call) => answers.push(call.answer(None)),
++                        _ => anyhow::bail!("unsupported pending-call variant"),
+                     }
+-                    let id = call.tool_call.id.clone();
+-                    let name = call.tool_call.function.name.clone();
+-                    let args = call.tool_call.function.arguments_value().to_string();
+-
+-
+-                    println!("approve {name}({args})? [y/N]");
+-                    let mut answer = String::new();
+-                    std::io::stdin().lock().read_line(&mut answer)?;
+-
+-
+-                    let content = if answer.trim() == "y" {
+-                        let result = tools.execute(&name, args, &mut ToolContext::new()).await;
+-                        result.output().clone().into_content()
+-                    } else {
+-                        // Fail-closed: anything but an explicit yes is a denial the model sees.
+-                        vec![ToolResultContent::text("denied by the reviewer")]
+-                    };
+-                    results.push(UserContent::tool_result(id, name, content));
+                 }
+-                resumed.tool_results(results)?;
+-                run = resumed;
++                resumed.answer_all(answers)?;
++                // Persist answered state too; answered slots are not offered again after resume.
++                std::fs::write(checkpoint, serde_json::to_vec(&resumed)?)?;
++                run = serde_json::from_slice(&std::fs::read(checkpoint)?)?;
+             }
+-
+-
+             AgentRunStep::Done(response) => {
+-                println!("{}", response.output());
++                assert_eq!(EXECUTIONS.load(std::sync::atomic::Ordering::SeqCst), approved);
++                println!("{} (executed {approved} simulated transfers)", response.output());
+                 return Ok(());
+             }
+         }
+     }
+-}+}
+--- official/14/7
++++ rig-0.46.0/14/7
+@@ -1,4 +1,12 @@
+-use rig::vector_store::InsertDocuments;
++use rig::vector_store::{InsertDocuments, VectorStoreError};
++use rig::embeddings::{Embed, Embedding};
++use serde::Serialize;
+ 
+-
+-store.insert_documents(embeddings).await?;+async fn insert<S, D>(store: &S, embeddings: Vec<(D, Vec<Embedding>)>) -> Result<(), VectorStoreError>
++where
++    S: InsertDocuments,
++    D: Serialize + Embed + Send,
++{
++    store.insert_documents(embeddings).await
++}
++// InMemoryVectorStore 使用同步的 store.add_documents(embeddings)。--- official/16/0
++++ rig-0.46.0/16/0
+@@ -1,14 +1,14 @@
+-use rig::memory::InMemoryConversationMemory;
+-use rig::providers::openai::{self, OpenAI};
+-
+-
+-let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))
+-    .preamble("You are a helpful assistant.")
+-    .memory(InMemoryConversationMemory::new())
+-    .build();
+-
+-
+-// Each conversation id keeps its own history.
+-agent.prompt("My name is Ada.").conversation("user-42").await?;
+-let reply = agent.prompt("What's my name?").conversation("user-42").await?;
+-println!("{}", reply.output());+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::memory::{MemoryStore, load};
++    use rig::providers::openai::{self, OpenAI};
++    let store = MemoryStore::default();
++    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))
++        .preamble("You are a helpful assistant.")
++        .memory(store.clone()).build();
++    agent.prompt("My name is Ada.").conversation("user-42").await?;
++    let reply = agent.prompt("What's my name?").conversation("user-42").await?;
++    println!("{}", reply.output());
++    assert_eq!(load(&store, "user-42")?.messages().len(), 4);
++    Ok(())
++}
+--- official/16/2
++++ rig-0.46.0/16/2
+@@ -1,15 +1,14 @@
+-pub trait ConversationMemory: WasmCompatSend + WasmCompatSync {
+-    /// Load the full history for a conversation (empty Vec if none).
+-    fn load<'a>(&'a self, conversation_id: &'a ConversationId)
+-        -> WasmBoxedFuture<'a, Result<Vec<Message>, MemoryError>>;
++use rig::memory::{MemoryStore, load, save};
++use rig::message::Message;
+ 
+-
+-    /// Append the messages of a successful turn.
+-    fn append<'a>(&'a self, conversation_id: &'a ConversationId, messages: Vec<Message>)
+-        -> WasmBoxedFuture<'a, Result<(), MemoryError>>;
+-
+-
+-    /// Remove all stored messages for a conversation.
+-    fn clear<'a>(&'a self, conversation_id: &'a ConversationId)
+-        -> WasmBoxedFuture<'a, Result<(), MemoryError>>;
+-}+fn main() -> anyhow::Result<()> {
++    // Store / AsyncStore replace ConversationMemory. load/save manage session format.
++    let store = MemoryStore::default();
++    let mut conversation = load(&store, "user-42")?;
++    conversation.extend([Message::user("My name is Ada."), Message::assistant("Hello, Ada!")]);
++    save(&store, "user-42", &mut conversation)?;
++    let resumed = load(&store, "user-42")?;
++    assert_eq!(resumed.messages(), conversation.messages());
++    println!("saved and restored {} messages", resumed.messages().len());
++    Ok(())
++}
+--- official/16/3
++++ rig-0.46.0/16/3
+@@ -1 +1 @@
+-rig = { version = "0.44.0", features = ["memory"] }+rig = { version = "=0.46.0", features = ["memory"] }--- official/16/4
++++ rig-0.46.0/16/4
+@@ -1,5 +1,16 @@
+-use rig::memory::{InMemoryConversationMemory, IntoFilter, SlidingWindowMemory};
+-
+-
+-let memory = InMemoryConversationMemory::new()
+-    .with_filter(SlidingWindowMemory::last_messages(20).into_filter());+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::memory::{MemoryStore, load, save};
++    use rig::memory::recent::{view, LastMessages};
++    use rig::providers::openai::{self, OpenAI};
++    let store = MemoryStore::default();
++    let mut conversation = load(&store, "user-42")?;
++    let selected = view(conversation.messages(), &LastMessages(20)).to_vec();
++    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5)).build();
++    // Restrict only the request window; retain the full stored conversation.
++    let response = agent.prompt("Hello!").history(selected).await?;
++    println!("{}", response.output());
++    conversation.extend(response.messages);
++    save(&store, "user-42", &mut conversation)?;
++    Ok(())
++}
+--- official/16/5
++++ rig-0.46.0/16/5
+@@ -1,6 +1,16 @@
+-use rig::memory::{HeuristicTokenCounter, InMemoryConversationMemory, IntoFilter, TokenWindowMemory};
+-
+-
+-let memory = InMemoryConversationMemory::new().with_filter(
+-    TokenWindowMemory::new(4_000, HeuristicTokenCounter::default()).into_filter(),
+-);+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::memory::{MemoryStore, load, save};
++    use rig::memory::recent::{view, TokenBudget};
++    use rig::providers::openai::{self, OpenAI};
++    let store = MemoryStore::default();
++    let mut conversation = load(&store, "user-42")?;
++    let selected = view(conversation.messages(), &TokenBudget::new(4_000)).to_vec();
++    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5)).build();
++    // Restrict only the request window; retain the full stored conversation.
++    let response = agent.prompt("Hello!").history(selected).await?;
++    println!("{}", response.output());
++    conversation.extend(response.messages);
++    save(&store, "user-42", &mut conversation)?;
++    Ok(())
++}
+--- official/16/6
++++ rig-0.46.0/16/6
+@@ -1,15 +1,23 @@
+-use rig::memory::{CompactingMemory, InMemoryConversationMemory, SlidingWindowMemory, TemplateCompactor};
+-use rig::providers::openai::{self, OpenAI};
+-
+-
+-let memory = CompactingMemory::new(
+-    InMemoryConversationMemory::new(),
+-    SlidingWindowMemory::last_messages(20),
+-    TemplateCompactor::new(), // plain-text rollup, no model call
+-);
+-
+-
+-let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))
+-    .preamble("You are a helpful assistant.")
+-    .memory(memory)
+-    .build();+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::catalog::Catalog;
++    use rig::memory::{MemoryStore, load, save, Summarizer, SummaryState, CompactReason, apply_summary};
++    use rig::message::Message;
++    use rig::providers::openai::{self, OpenAI};
++    let store = MemoryStore::default();
++    let mut conversation = load(&store, "user-42")?;
++    conversation.extend([Message::user("My name is Ada. I am learning Rust."),
++        Message::assistant("I will remember that.")]);
++    let model = OpenAI::from_env()?.completion(openai::GPT_5_5);
++    let resolved = Catalog::builtin().resolve("openai/gpt-5.5")?;
++    let reason = CompactReason::Asked { focus: "Keep the user's name and learning goal".into() };
++    let request = Summarizer::default().request(conversation.messages(), "", &reason, &resolved.spec)?;
++    let reply = model.call(request).await?;
++    let state = SummaryState { summary: Summarizer::summary_text(&reply)?, ..Default::default() };
++    // None summarizes all messages; pass a MessageId to keep a recent suffix.
++    apply_summary(&mut conversation, None, &state)
++        .ok_or_else(|| anyhow::anyhow!("summary was not applied"))?;
++    save(&store, "user-42", &mut conversation)?;
++    println!("{}", state.summary);
++    Ok(())
++}
+--- official/16/7
++++ rig-0.46.0/16/7
+@@ -1,12 +1,12 @@
+-use rig::providers::openai::{self, OpenAI};
+-
+-
+-let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))
+-    .preamble("You are a helpful assistant. Be concise.")
+-    .build();
+-
+-
+-let mut history: Vec<Message> = Vec::new();
+-agent.chat("My name is Ada.", &mut history).await?;
+-let reply = agent.chat("What's my name?", &mut history).await?;
+-println!("{}", reply.output());+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::message::Message;
++    use rig::providers::openai::{self, OpenAI};
++    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))
++        .preamble("You are a helpful assistant. Be concise.").build();
++    let mut history: Vec<Message> = Vec::new();
++    agent.chat("My name is Ada.", &mut history).await?;
++    let reply = agent.chat("What's my name?", &mut history).await?;
++    println!("{}", reply.output());
++    Ok(())
++}
+--- official/16/8
++++ rig-0.46.0/16/8
+@@ -1,8 +1,12 @@
+-let mut history = vec![
+-    Message::user("What is the Rust programming language?"),
+-    Message::assistant("Rust is a systems programming language..."),
+-];
+-
+-
+-let response = agent.prompt("Who created it?").history(history.clone()).await?;
+-history.extend(response.messages);+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::message::Message;
++    use rig::providers::openai::{self, OpenAI};
++    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5)).build();
++    let mut history = vec![Message::user("What is Rust?"),
++        Message::assistant("Rust is a systems programming language.")];
++    let response = agent.prompt("Who created it?").history(history.clone()).await?;
++    println!("{}", response.output());
++    history.extend(response.messages);
++    Ok(())
++}
+--- official/19/0
++++ rig-0.46.0/19/0
+@@ -2,7 +2,7 @@
+ use rig::providers::openai::{self, OpenAI};
+ 
+ 
+-let model = OpenAI::from_env()?.image_generation(openai::GPT_IMAGE_1);
++let model = OpenAI::from_env()?.image_generation(openai::GPT_IMAGE_2);
+ 
+ 
+ let response = model
+--- official/20/4
++++ rig-0.46.0/20/4
+@@ -1,5 +1,5 @@
+ [dependencies]
+-rig = "0.44.0"
++rig = "=0.46.0"
+ tracing = "0.1"
+ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+ tracing-opentelemetry = "0.33"
+--- official/21/0
++++ rig-0.46.0/21/0
+@@ -1,2 +1,2 @@
+ [dev-dependencies]
+-rig = { version = "0.44.0", features = ["test-utils"] }+rig = { version = "=0.46.0", features = ["test-utils"] }--- official/22/0
++++ rig-0.46.0/22/0
+@@ -1 +1 @@
+-rig = { version = "0.44.0", features = ["cassette"] }+rig = { version = "=0.46.0", features = ["cassette"] }--- official/22/1
++++ rig-0.46.0/22/1
+@@ -1,18 +1,16 @@
+-use rig::cassette::agent::AgentReplayExt;
+-use rig::cassette::effect_log::EffectLogRecorder;
+-use rig::providers::openai::{self, OpenAI};
+-
+-
+-let recorder = EffectLogRecorder::new();
+-let agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))
+-    .preamble("You are a helpful assistant.")
+-    .record_to(recorder.clone())
+-    .build();
+-
+-
+-let response = agent.prompt("Name three Rust web frameworks.").await?;
+-println!("{}", response.output());
+-
+-
+-let log = agent.stamp(recorder.take());
+-std::fs::write("frameworks.effects.json", serde_json::to_string_pretty(&log)?)?;+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::cassette::agent::AgentReplayExt;
++    use rig::cassette::effect_log::EffectLogRecorder;
++    use rig::providers::openai::{self, OpenAI};
++    let recorder = EffectLogRecorder::new();
++    let agent = rig::AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))
++        .owner("replay-example")
++        .preamble("You are a helpful assistant.")
++        .record_to(recorder.clone()).build();
++    let response = agent.prompt("Name three Rust web frameworks.").await?;
++    println!("{}", response.output());
++    let log = agent.stamp(recorder.take());
++    std::fs::write("frameworks.effects.json", serde_json::to_string_pretty(&log)?)?;
++    Ok(())
++}
+--- official/22/2
++++ rig-0.46.0/22/2
+@@ -1,23 +1,17 @@
+-use rig::bus::Bus;
+-use rig::cassette::agent::replay::register_all;
+-use rig::cassette::effect_log::EffectLog;
+-
+-
+-let log: EffectLog = serde_json::from_str(&std::fs::read_to_string("frameworks.effects.json")?)?;
+-
+-
+-// A bus whose handlers are the log's replayers.
+-let (dispatcher, registrar, mut driver) = Bus::channel();
+-register_all(&log, &mut driver)?;
+-tokio::spawn(driver);
+-
+-
+-// The same agent, sending its model calls to the recorded model key.
+-let model_key = log[0].key.clone();
+-let agent = AgentBuilder::over_bus(dispatcher, registrar, "replay", model_key)
+-    .preamble("You are a helpful assistant.")
+-    .build();
+-
+-
+-let response = agent.prompt("Name three Rust web frameworks.").await?;
+-println!("{}", response.output()); // the recorded answer, no provider called+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::handlers::Handlers;
++    use rig::cassette::agent::replay::register_all;
++    use rig::cassette::effect_log::EffectLog;
++    use rig::effect::EffectFamily;
++    let log: EffectLog = serde_json::from_str(&std::fs::read_to_string("frameworks.effects.json")?)?;
++    let handlers = Handlers::default();
++    register_all(&log, &handlers)?;
++    let model_key = log.iter().find(|r| r.kind.family() == EffectFamily::Completion)
++        .ok_or_else(|| anyhow::anyhow!("no completion record"))?.key.clone();
++    let agent = rig::AgentBuilder::over_handlers(handlers, "replay-example", model_key)
++        .preamble("You are a helpful assistant.").build();
++    let response = agent.prompt("Name three Rust web frameworks.").await?;
++    println!("{}", response.output());
++    Ok(())
++}
+--- official/22/3
++++ rig-0.46.0/22/3
+@@ -1,16 +1,26 @@
+-use rig::cassette::effect_log::EffectLogReplayer;
+-use rig::effect::EffectFamily;
+-use rig::tool::server::ToolServer;
+-use rig::tool::RegisteredTool;
+-
+-
+-let tools = ToolServer::new().run();
+-if let Some(record) = log.iter().find(|r| r.kind.family() == EffectFamily::Tool) {
+-    let replayer = EffectLogReplayer::for_key(&log, &record.key)?;
+-    tools.add_registered_tool(RegisteredTool::from_handler(replayer)?);
++#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::handlers::Handlers;
++    use rig::cassette::agent::replay::register_all;
++    use rig::cassette::effect_log::{EffectLog, EffectLogReplayer};
++    use rig::effect::EffectFamily;
++    use rig::tool::{RegisteredTool, server::ToolServer};
++    let log: EffectLog = serde_json::from_str(&std::fs::read_to_string("frameworks.effects.json")?)?;
++    let handlers = Handlers::default();
++    register_all(&log, &handlers)?;
++    let tools = ToolServer::new().run();
++    let mut seen = std::collections::BTreeSet::new();
++    for record in log.iter().filter(|r| r.kind.family() == EffectFamily::Tool) {
++        if seen.insert(record.key.to_string()) {
++            let replayer = EffectLogReplayer::for_key(&log, &record.key)?;
++            tools.add_registered_tool(RegisteredTool::from_handler(replayer)?);
++        }
++    }
++    let model_key = log.iter().find(|r| r.kind.family() == EffectFamily::Completion)
++        .ok_or_else(|| anyhow::anyhow!("no completion record"))?.key.clone();
++    let agent = rig::AgentBuilder::over_handlers(handlers, "replay-example", model_key)
++        .preamble("You are a helpful assistant.")
++        .tool_server_handle(tools).build();
++    println!("{}", agent.prompt("Name three Rust web frameworks.").max_turns(4).await?.output());
++    Ok(())
+ }
+-
+-
+-let agent = AgentBuilder::over_bus(dispatcher, registrar, "replay", model_key)
+-    .tool_server_handle(tools)
+-    .build();--- official/25/1
++++ rig-0.46.0/25/1
+@@ -1,5 +1,5 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["pdf"] }
++rig = { version = "=0.46.0", features = ["pdf"] }
+ tokio = { version = "1", features = ["full"] }
+ anyhow = "1"
+ serde = { version = "1", features = ["derive"] }--- official/25/3
++++ rig-0.46.0/25/3
+@@ -4,7 +4,7 @@
+ 
+ 
+ /// One page of a PDF. `#[embed]` marks the field that gets embedded.
+-#[derive(Embed, Serialize, Clone)]
++#[derive(Embed, Serialize, serde::Deserialize, Clone)]
+ struct Page {
+     id: String,
+     #[embed]
+--- official/26/1
++++ rig-0.46.0/26/1
+@@ -1,5 +1,5 @@
+ [dependencies]
+-rig = "0.44.0"
++rig = "=0.46.0"
+ tokio = { version = "1", features = ["full"] }
+ anyhow = "1"
+ serde = { version = "1", features = ["derive"] }
+--- official/27/5
++++ rig-0.46.0/27/5
+@@ -1,11 +1,14 @@
+-use rig::providers::registry;
+-
+-
+-// e.g. read from a config file
+-let model_name = "anthropic/claude-sonnet-5-5";
+-let api_key = std::env::var("ANTHROPIC_API_KEY")?;
+-
+-
+-let model = registry::connect(model_name, api_key)?;
+-let agent = AgentBuilder::new(model).preamble("You are a helpful assistant.").build();
+-println!("{}", agent.prompt("Hello!").await?.output());+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::catalog::Catalog;
++    use rig::providers::registry::ConnectOptions;
++    let model_name = "anthropic/claude-sonnet-5-5";
++    let api_key = std::env::var("ANTHROPIC_API_KEY")?;
++    let model = Catalog::builtin().connect_with(
++        model_name, ConnectOptions::new().api_key(api_key),
++    )?;
++    let agent = rig::AgentBuilder::new(model)
++        .preamble("You are a helpful assistant.").build();
++    println!("{}", agent.prompt("Hello!").await?.output());
++    Ok(())
++}
+--- official/27/6
++++ rig-0.46.0/27/6
+@@ -1,9 +1,12 @@
+-use rig::providers::registry::ProviderRef;
+-
+-
+-let reference: ProviderRef = "deepseek:deepseek-chat".parse()?;
+-let model = reference.completion_model()?; // reads DEEPSEEK_API_KEY
+-
+-
+-// Serializes as the string "deepseek/openai:deepseek-chat".
+-let stored = serde_json::to_string(&reference)?;+#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::catalog::Catalog;
++    // Persist the reference text, not the removed ProviderRef type.
++    let reference = "deepseek/deepseek-v4-flash";
++    let stored = serde_json::to_string(reference)?;
++    let restored: String = serde_json::from_str(&stored)?;
++    let model = Catalog::builtin().connect(&restored)?;
++    let _agent = rig::AgentBuilder::new(model).build();
++    assert_eq!(restored, reference);
++    Ok(())
++}
+--- official/27/7
++++ rig-0.46.0/27/7
+@@ -1,19 +1,17 @@
+-use rig::catalog::Catalog;
+-use rig::providers::registry;
+-
+-
+-let spec = Catalog::builtin()
+-    .resolve("openai/gpt-5.5")
+-    .ok_or_else(|| anyhow::anyhow!("model not in catalog"))?;
+-
+-
+-println!(
+-    "{}: {:?} token context, tools: {}",
+-    spec.display_name, spec.context_window, spec.tools
+-);
+-if let Some(pricing) = spec.pricing {
+-    println!("${} / ${} per million input/output tokens", pricing.input, pricing.output);
++#[tokio::main]
++async fn main() -> anyhow::Result<()> {
++    use rig::catalog::Catalog;
++    use rig::providers::registry::ConnectOptions;
++    let catalog = Catalog::builtin();
++    let resolved = catalog.resolve("openai/gpt-5.5")?;
++    let spec = resolved.spec;
++    println!("{}: {:?} token context, tools: {}",
++        spec.display_name, spec.context_window, spec.tools);
++    if let Some(pricing) = &spec.pricing {
++        println!("${} / ${} per million input/output tokens", pricing.input, pricing.output);
++    }
++    let model = catalog.connect_with("openai/gpt-5.5",
++        ConnectOptions::new().api_key(std::env::var("OPENAI_API_KEY")?))?;
++    let _agent = rig::AgentBuilder::new(model).build();
++    Ok(())
+ }
+-
+-
+-let model = registry::connect(spec, std::env::var("OPENAI_API_KEY")?)?;--- official/29/2
++++ rig-0.46.0/29/2
+@@ -1,5 +1,5 @@
+ [dependencies]
+-rig = "0.44.0"
++rig = "=0.46.0"
+ serenity = "0.12"
+ tokio = { version = "1", features = ["full"] }
+ anyhow = "1"--- official/30/1
++++ rig-0.46.0/30/1
+@@ -1,8 +1,9 @@
+ [dependencies]
+-rig = "0.44.0"
++rig = "=0.46.0"
+ tokio = { version = "1", features = ["full"] }
+ serde = { version = "1", features = ["derive"] }
+ serde_json = "1"
+ reqwest = { version = "0.13", features = ["json"] }
+ thiserror = "2"
+-chrono = "0.4"+chrono = "0.4"
++anyhow = "1"--- official/30/3
++++ rig-0.46.0/30/3
+@@ -1,3 +1,5 @@
++mod flight_search_tool;
++
+ use flight_search_tool::FlightSearchTool;
+ use rig::prelude::*;
+ use rig::providers::openai::{self, OpenAI};
+--- official/32/5
++++ rig-0.46.0/32/5
+@@ -44,6 +44,7 @@
+             top_p,
+             seed,
+             stop,
++            cache_key,
+         } = fields;
+         const NO_FIELD: &str = "Acme has no such field";
+         OptionMap {
+@@ -57,6 +58,7 @@
+             top_p: Mapping::of(top_p, |top_p| Mapping::Send(json!({ "top_p": top_p }))),
+             seed: Mapping::of(seed, |seed| Mapping::Send(json!({ "seed": seed }))),
+             stop: Mapping::of_stop(stop, |stop| Mapping::Send(json!({ "stop": stop }))),
++            cache_key: Mapping::unrouted(cache_key),
+         }
+     }
+ }--- official/32/6
++++ rig-0.46.0/32/6
+@@ -6,7 +6,7 @@
+ 
+ 
+ /// One Acme reply document, or one line of a streamed reply.
+-#[derive(Debug, Deserialize)]
++#[derive(Debug, Serialize, Deserialize)]
+ pub struct Chunk {
+     #[serde(default)]
+     pub id: Option<String>,
+@@ -18,10 +18,13 @@
+     pub done: bool,
+     #[serde(default)]
+     pub usage: Option<AcmeUsage>,
++    // Preserve vendor-specific fields for CompletionResponse::raw.
++    #[serde(flatten)]
++    pub extra: serde_json::Map<String, serde_json::Value>,
+ }
+ 
+ 
+-#[derive(Debug, Deserialize)]
++#[derive(Debug, Serialize, Deserialize)]
+ pub struct AcmeUsage {
+     pub input_tokens: u64,
+     pub output_tokens: u64,
+--- official/32/7
++++ rig-0.46.0/32/7
+@@ -1,6 +1,5 @@
+ use rig::operation::Completion;
+ use rig::wire::document::{Reassemble, Serves};
+-use rig::wire::WireFrame;
+ use serde_json::{Map, Value};
+ 
+ 
+@@ -11,9 +10,9 @@
+ }
+ 
+ 
+-impl Reassemble<WireFrame> for AcmeDocument {
+-    fn absorb(&mut self, frame: &WireFrame) {
+-        let Ok(Value::Object(chunk)) = serde_json::from_str(&frame.as_str()) else {
++impl Reassemble<Chunk> for AcmeDocument {
++    fn absorb(&mut self, event: &Chunk) {
++        let Ok(Value::Object(chunk)) = serde_json::to_value(event) else {
+             return;
+         };
+         if let Some(text) = chunk.get("text").and_then(Value::as_str) {
+--- official/32/8
++++ rig-0.46.0/32/8
+@@ -16,7 +16,7 @@
+         }
+         let mut messages = Vec::new();
+         for message in &request.chat_history {
+-            let (role, content) = match message {
++            let (role, content) = match message.as_ref() {
+                 Message::System { content } => ("system", content.clone()),
+                 Message::User { content } => ("user", user_text(content)?),
+                 Message::Assistant(turn) => ("assistant", assistant_text(&turn.content)),
+@@ -69,6 +69,7 @@
+     type Op = Completion;
+     type Payload = Encoded;
+     type Frame = WireFrame;
++    type Event = Chunk;
+     type Decoder<'id> = AcmeDecoder;
+     type Reassembler = AcmeDocument;
+ 
+--- official/32/11
++++ rig-0.46.0/32/11
+@@ -23,7 +23,7 @@
+ let streamed = concat!(
+     r#"{"text":"Hel"}"#, "\n",
+     r#"{"text":"lo"}"#, "\n",
+-    r#"{"id":"gen_1","done":true,"usage":{"input_tokens":3,"output_tokens":2}}"#, "\n",
++    r#"{"id":"gen_1","done":true,"usage":{"input_tokens":3,"output_tokens":2},"vendor_metric":7}"#, "\n",
+ );
+ let model = Model::new(wire, Replay(streamed));
+ 
+@@ -31,4 +31,5 @@
+ let response = model.stream("hi")?.finish().await?;
+ assert_eq!(response.text(), "Hello");
+ assert_eq!(response.usage.output_tokens, Some(2));
+-assert_eq!(response.raw["text"], "Hello");+assert_eq!(response.raw["text"], "Hello");
++assert_eq!(response.raw["vendor_metric"], 7);--- official/33/0
++++ rig-0.46.0/33/0
+@@ -1,5 +1,6 @@
+ [dependencies]
+-rig = "0.44.0"
++rig = "=0.46.0"
+ anyhow = "1"
+-tokio = { version = "1", features = ["macros"] }
+-serde = { version = "1", features = ["derive"] }+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
++serde = { version = "1", features = ["derive"] }
++lambda_runtime = "1"--- official/34/0
++++ rig-0.46.0/34/0
+@@ -1,5 +1,7 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["lancedb"] }
+-lancedb = { version = "0.30", features = ["aws", "dynamodb"] }
+-tokio = { version = "1", features = ["macros"] }
+-anyhow = "1"+rig = { version = "=0.46.0", features = ["lancedb"] }
++lancedb = { version = "=0.30.0", features = ["aws", "dynamodb"] }
++tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
++anyhow = "1"
++# Keep the AWS SDK dependency graph compatible with aws-smithy-json 0.63.
++aws-smithy-types = "=1.6.3"--- official/34/6
++++ rig-0.46.0/34/6
+@@ -12,7 +12,7 @@
+ aws s3 cp bootstrap.zip s3://<your_bucket_name>/rig/loader/
+ 
+ 
+-cd ..
++cd ../app
+ zip -r bootstrap.zip bootstrap
+ # Can also do this directly on the AWS console
+ aws s3 cp bootstrap.zip s3://<your_bucket_name>/rig/app/--- official/35/0
++++ rig-0.46.0/35/0
+@@ -1,2 +1,2 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["lancedb", "bedrock"] }+rig = { version = "=0.46.0", features = ["lancedb", "bedrock"] }--- official/36/1
++++ rig-0.46.0/36/1
+@@ -1,2 +1,2 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["bedrock"] }+rig = { version = "=0.46.0", features = ["bedrock"] }--- official/37/9
++++ rig-0.46.0/37/9
+@@ -1,2 +1,2 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["websocket"] }+rig = { version = "=0.46.0", features = ["websocket"] }--- official/39/5
++++ rig-0.46.0/39/5
+@@ -1,2 +1,4 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["candle"] }+rig = { version = "=0.46.0", features = ["candle"] }
++tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
++anyhow = "1"--- official/39/7
++++ rig-0.46.0/39/7
+@@ -1,2 +1,4 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["fastembed"] }+rig = { version = "=0.46.0", features = ["fastembed"] }
++tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
++anyhow = "1"--- official/40/5
++++ rig-0.46.0/40/5
+@@ -1,2 +1,2 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["qdrant"] }+rig = { version = "=0.46.0", features = ["qdrant"] }--- official/42/0
++++ rig-0.46.0/42/0
+@@ -1,5 +1,10 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["lancedb"] }
+-lancedb = "0.30"
+-arrow-array = "58"
+-tokio = { version = "1", features = ["full"] }+rig = { version = "=0.46.0", features = ["lancedb"] }
++lancedb = { version = "=0.30.0", features = ["aws"] }
++arrow-array = "=58.4.1"
++tokio = { version = "1", features = ["full"] }
++anyhow = "1"
++serde = { version = "1", features = ["derive"] }
++serde_json = "1"
++# Keep the AWS SDK dependency graph compatible with aws-smithy-json 0.63.
++aws-smithy-types = "=1.6.3"--- official/42/5
++++ rig-0.46.0/42/5
+@@ -1,7 +1,9 @@
+ use lancedb::index::{Index, vector::IvfPqIndexBuilder};
+ 
+-
+-if table.index_stats("embedding").await?.is_none() {
++let has_vector_index = table.list_indices().await?.iter()
++    .any(|index| index.columns.iter().any(|column| column == "embedding"));
++// Small examples use exact search; PQ training needs at least 256 rows.
++if table.count_rows(None).await? >= 256 && !has_vector_index {
+     table
+         .create_index(&["embedding"], Index::IvfPq(IvfPqIndexBuilder::default()))
+         .execute()
+--- official/43/0
++++ rig-0.46.0/43/0
+@@ -1,4 +1,7 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["mongodb"] }
+-mongodb = "3"
+-tokio = { version = "1", features = ["full"] }+rig = { version = "=0.46.0", features = ["mongodb"] }
++mongodb = "=3.4.1"
++tokio = { version = "1", features = ["full"] }
++anyhow = "1"
++serde = { version = "1", features = ["derive"] }
++serde_json = "1"--- official/44/0
++++ rig-0.46.0/44/0
+@@ -1,3 +1,6 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["neo4j"] }
+-tokio = { version = "1", features = ["full"] }+rig = { version = "=0.46.0", features = ["neo4j"] }
++tokio = { version = "1", features = ["full"] }
++anyhow = "1"
++serde = { version = "1", features = ["derive"] }
++serde_json = "1"--- official/45/0
++++ rig-0.46.0/45/0
+@@ -1,4 +1,7 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["qdrant"] }
+-qdrant-client = "1"
+-tokio = { version = "1", features = ["full"] }+rig = { version = "=0.46.0", features = ["qdrant"] }
++qdrant-client = "=1.20.0"
++tokio = { version = "1", features = ["full"] }
++anyhow = "1"
++serde = { version = "1", features = ["derive"] }
++serde_json = "1"--- official/46/0
++++ rig-0.46.0/46/0
+@@ -1,4 +1,7 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["surrealdb"] }
+-surrealdb = "3"
+-tokio = { version = "1", features = ["full"] }+rig = { version = "=0.46.0", features = ["surrealdb"] }
++surrealdb = "=3.2.5"
++tokio = { version = "1", features = ["full"] }
++anyhow = "1"
++serde = { version = "1", features = ["derive"] }
++serde_json = "1"--- official/46/3
++++ rig-0.46.0/46/3
+@@ -5,6 +5,7 @@
+ 
+ let model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);
+ let surreal = Surreal::new::<Mem>(()).await?;
++surreal.use_ns("example").use_db("example").await?;
+ 
+ 
+ let store = SurrealVectorStore::new(
+--- official/47/0
++++ rig-0.46.0/47/0
+@@ -1,4 +1,5 @@
+ [dependencies]
+-rig = { version = "0.44.0", features = ["rmcp"] }
+-rmcp = { version = "2", features = ["client", "transport-streamable-http-client-reqwest"] }
+-tokio = { version = "1", features = ["full"] }+rig = { version = "=0.46.0", features = ["rmcp"] }
++rmcp = { version = "=3.5.0", features = ["client", "transport-streamable-http-client-reqwest"] }
++tokio = { version = "1", features = ["full"] }
++anyhow = "1"--- official/47/1
++++ rig-0.46.0/47/1
+@@ -1,18 +1,16 @@
+ use rig::prelude::*;
+ use rig::providers::openai::{self, OpenAI};
+ use rig::tool::DynamicTool;
+-use rig::tool::rmcp::{McpTool, rmcp::service::ServerSink};
++use rig::tool::rmcp::McpConnection;
+ 
+-
+-/// `server` is the peer of a connected MCP client (`client.peer().clone()`).
+-async fn mcp_agent(server: ServerSink) -> anyhow::Result<Agent> {
+-    let tools = server
+-        .list_all_tools()
++// Connection owns the service; registered tools keep it alive.
++async fn mcp_agent(connection: &McpConnection) -> anyhow::Result<Agent> {
++    let tools = connection
++        .tools()
+         .await?
+         .into_iter()
+-        .map(|tool| DynamicTool::try_from(McpTool::from_mcp_server(tool, server.clone())))
++        .map(DynamicTool::try_from)
+         .collect::<Result<Vec<_>, _>>()?;
+-
+ 
+     Ok(AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))
+         .preamble("You can use the tools of an MCP server.")
+--- official/47/2
++++ rig-0.46.0/47/2
+@@ -1,15 +1,14 @@
+ use rmcp::ServiceExt;
+-use rmcp::model::{ClientCapabilities, ClientInfo, Implementation};
++use rmcp::model::{ClientCapabilities, ClientConfig, Implementation};
+ use rmcp::transport::StreamableHttpClientTransport;
+ 
+-
+-let client_info = ClientInfo::new(
++let client_config = ClientConfig::new(
+     ClientCapabilities::default(),
+     Implementation::new("my-agent", "0.1.0"),
+ );
+ let transport = StreamableHttpClientTransport::from_uri("http://localhost:8080");
+-let client = client_info.serve(transport).await?;
+-
+-
+-let agent = mcp_agent(client.peer().clone()).await?;
+-let answer = agent.prompt("What is 2 + 5?").await?.output();+let connection = McpConnection::new(client_config.serve(transport).await?);
++let agent = mcp_agent(&connection).await?;
++let answer = agent.prompt("What is 2 + 5?").await?.output();
++println!("{answer}");
++connection.close().await;--- official/47/3
++++ rig-0.46.0/47/3
+@@ -2,17 +2,17 @@
+ use rig::providers::openai::{self, OpenAI};
+ use rig::tool::rmcp::McpClientHandler;
+ use rig::tool::server::ToolServer;
+-use rmcp::model::{ClientCapabilities, ClientInfo, Implementation};
++use rmcp::model::{ClientCapabilities, ClientConfig, Implementation};
+ 
+ 
+ let tool_server = ToolServer::new().run();
+ 
+ 
+-let client_info = ClientInfo::new(
++let client_config = ClientConfig::new(
+     ClientCapabilities::default(),
+     Implementation::new("my-agent", "0.1.0"),
+ );
+-let handler = McpClientHandler::new(client_info, tool_server.clone());
++let handler = McpClientHandler::new(client_config, tool_server.clone());
+ 
+ 
+ // Connects, fetches the initial tool list, and keeps it in sync.
+--- official/47/4
++++ rig-0.46.0/47/4
+@@ -1,4 +1,4 @@
+ [dependencies]
+-rmcp = { version = "2", features = ["server", "macros", "transport-streamable-http-server"] }
++rmcp = { version = "=3.5.0", features = ["server", "macros", "transport-streamable-http-server"] }
+ schemars = "1"
+ serde = { version = "1", features = ["derive"] }--- official/47/5
++++ rig-0.46.0/47/5
+@@ -1,7 +1,7 @@
+ use rmcp::{
+     ServerHandler,
+     handler::server::{router::tool::ToolRouter, wrapper::Parameters},
+-    model::{CallToolResult, ContentBlock, ErrorData, ServerCapabilities, ServerInfo},
++    model::{CallToolResult, ContentBlock, ErrorData, ServerCapabilities, ServerConfig},
+     schemars, tool, tool_handler, tool_router,
+ };
+ 
+@@ -35,7 +35,7 @@
+ 
+ #[tool_handler(router = self.tool_router)]
+ impl ServerHandler for Calculator {
+-    fn get_info(&self) -> ServerInfo {
+-        ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
++    fn get_info(&self) -> ServerConfig {
++        ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
+     }
+ }--- official/48/0
++++ rig-0.46.0/48/0
+@@ -1,4 +1,4 @@
+-git clone --branch v0.44.0 https://github.com/0xPlaygrounds/rig
++git clone --branch v0.46.0 https://github.com/0xPlaygrounds/rig
+ cd rig
+ 
+ 
+--- official/50/8
++++ rig-0.46.0/50/8
+@@ -1 +1 @@
+-rig = { version = "0.44.0", default-features = false, features = ["agent", "derive", "reqwest", "native-tls"] }+rig = { version = "=0.46.0", default-features = false, features = ["agent", "derive", "reqwest", "native-tls"] }--- official/50/10
++++ rig-0.46.0/50/10
+@@ -1 +1 @@
+-rig = { version = "0.44.0", features = ["qdrant", "pdf", "image"] }+rig = { version = "=0.46.0", features = ["qdrant", "pdf", "image"] }

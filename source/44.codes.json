@@ -1,0 +1,10 @@
+[
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"0.44.0\", features = [\"neo4j\"] }\ntokio = { version = \"1\", features = [\"full\"] }"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::neo4j::{Neo4jClient, vector_index::IndexConfig};\nuse rig::prelude::*;\nuse serde::{Deserialize, Serialize};\nuse rig::providers::openai::{self, OpenAI};\nuse rig::vector_store::InsertDocuments;\n\n\n#[derive(Embed, Clone, Serialize, Deserialize, Debug)]\nstruct Word {\n    id: String,\n    #[embed]\n    definition: String,\n}\n\n\n#[tokio::main]\nasync fn main() -> Result<(), anyhow::Error> {\n    let model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\n    let client = Neo4jClient::connect(\"neo4j://localhost:7687\", \"neo4j\", \"password\").await?;\n\n\n    // A vector index named \"words\" over the `embedding` property of `Word` nodes,\n    // as wide as the model's vectors.\n    client\n        .create_vector_index(IndexConfig::new(\"words\"), \"Word\", model.capabilities().ndims)\n        .await?;\n\n\n    // Reuse the model that produced (or will produce) the stored embeddings.\n    let index = client.get_index(model.clone(), \"words\").await?;\n\n\n    let embeddings = EmbeddingsBuilder::new(model)\n        .document(Word { id: \"doc0\".into(), definition: \"A flurbo is a green alien.\".into() })?\n        .document(Word { id: \"doc1\".into(), definition: \"A glarb-glarb is an ancient farming tool.\".into() })?\n        .build()\n        .await?;\n    index.insert_documents(embeddings).await?;\n\n\n    let req = VectorSearchRequest::builder()\n        .query(\"What is a glarb-glarb?\")\n        .samples(1)\n        .build();\n\n\n    for result in index.top_n::<Word>(req).await? {\n        println!(\"{:.3} {} {}\", result.score, result.id, result.document.definition);\n    }\n\n\n    Ok(())\n}"
+  }
+]

@@ -1,0 +1,12 @@
+examples-target/
+**/target/
+.venv/
+__pycache__/
+.env*
+
+# Generated website; GitHub Actions rebuilds it from source.
+/dist/
+# Local-only backups and preview captures.
+/升级前备份-*.zip
+/upgrade-preview.png
+.DS_Store

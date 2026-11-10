@@ -1,0 +1,11 @@
+[package]
+name = "rig-local-check"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[dependencies]
+rig = { version = "=0.46.0", features = ["candle", "fastembed"] }
+anyhow = "1"
+tokio = { version = "1", features = ["full"] }
+[profile.dev]
+debug = 0

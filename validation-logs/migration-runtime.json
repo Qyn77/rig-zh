@@ -1,0 +1,86 @@
+[
+  {
+    "name": "offline",
+    "args": [],
+    "input": null,
+    "exit": 0,
+    "stdout": "PASS: failed-save response retention, failed-load no-model-call, memory persistence, conversation isolation, windows, compaction, effect recording and replay\n",
+    "stderr": ""
+  },
+  {
+    "name": "p16_2",
+    "args": [],
+    "input": null,
+    "exit": 0,
+    "stdout": "saved and restored 2 messages\n",
+    "stderr": ""
+  },
+  {
+    "name": "p05_8",
+    "args": [],
+    "input": null,
+    "exit": 0,
+    "stdout": "context window: Some(200000)\n",
+    "stderr": ""
+  },
+  {
+    "name": "p05_6",
+    "args": [],
+    "input": null,
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "p27_6",
+    "args": [],
+    "input": null,
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "name": "p27_7",
+    "args": [],
+    "input": null,
+    "exit": 0,
+    "stdout": "GPT-5.5: Some(1050000) token context, tools: true\n$5 / $30 per million input/output tokens\n",
+    "stderr": ""
+  },
+  {
+    "name": "p22_2",
+    "args": [],
+    "input": null,
+    "exit": 0,
+    "stdout": "Axum, Actix, Rocket\n",
+    "stderr": ""
+  },
+  {
+    "name": "p22_3",
+    "args": [],
+    "input": null,
+    "exit": 0,
+    "stdout": "Axum, Actix, Rocket\n",
+    "stderr": ""
+  },
+  {
+    "name": "p10_0",
+    "args": [
+      "--offline"
+    ],
+    "input": "y\n",
+    "exit": 0,
+    "stdout": "approve transfer_funds({\"account\":\"B-2\",\"amount\":500})? [y/N]\nThe simulated transfer was reviewed. (executed 1 simulated transfers)\n",
+    "stderr": ""
+  },
+  {
+    "name": "p10_0",
+    "args": [
+      "--offline"
+    ],
+    "input": "n\n",
+    "exit": 0,
+    "stdout": "approve transfer_funds({\"account\":\"B-2\",\"amount\":500})? [y/N]\nThe simulated transfer was reviewed. (executed 0 simulated transfers)\n",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,150 @@
+    Checking rig-optional-check v0.1.0 (<temporary>/rig-optional-audit/check)
+warning: unused import: `rig::prelude::*`
+ --> examples/p39_003.rs:1:5
+  |
+1 | use rig::prelude::*;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `rig::prelude::*`
+ --> examples/p39_001.rs:1:5
+  |
+1 | use rig::prelude::*;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `serde_json::json`
+ --> examples/p39_001.rs:2:5
+  |
+2 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `serde_json::json`
+ --> examples/p39_003.rs:2:5
+  |
+2 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `rig::prelude::*`
+ --> examples/p39_000.rs:1:5
+  |
+1 | use rig::prelude::*;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `serde_json::json`
+ --> examples/p39_000.rs:2:5
+  |
+2 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `rig::prelude::*`
+ --> examples/p39_002.rs:1:5
+  |
+1 | use rig::prelude::*;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `serde_json::json`
+ --> examples/p39_002.rs:2:5
+  |
+2 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `serde_json::json`
+ --> examples/p43_003.rs:2:5
+  |
+2 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `req`
+ --> examples/p45_003.rs:9:5
+  |
+9 | let req = VectorSearchRequest::<QdrantFilter>::builder()
+  |     ^^^ help: if this is intentional, prefix it with an underscore: `_req`
+  |
+  = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `rig::prelude::*`
+ --> examples/p39_004.rs:1:5
+  |
+1 | use rig::prelude::*;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `serde_json::json`
+ --> examples/p39_004.rs:2:5
+  |
+2 | use serde_json::json;
+  |     ^^^^^^^^^^^^^^^^
+
+warning: unused variable: `client`
+ --> examples/p39_004.rs:8:5
+  |
+8 | let client = OpenAIConfig::with_key(&LLAMACPP, "")
+  |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_client`
+  |
+  = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `rig-optional-check` (example "p39_004") generated 3 warnings (run `cargo fix --example "p39_004" -p rig-optional-check` to apply 3 suggestions)
+warning: unused variable: `embedder`
+ --> examples/p39_002.rs:8:5
+  |
+8 | let embedder = Ollama::new().embedding(ollama::NOMIC_EMBED_TEXT, None);
+  |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_embedder`
+  |
+  = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `agent`
+  --> examples/p39_003.rs:10:5
+   |
+10 | let agent = AgentBuilder::new(client.chat(llamacpp::LLAMA_CPP))
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_agent`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `rig-optional-check` (example "p39_002") generated 3 warnings (run `cargo fix --example "p39_002" -p rig-optional-check` to apply 3 suggestions)
+warning: `rig-optional-check` (example "p39_003") generated 3 warnings (run `cargo fix --example "p39_003" -p rig-optional-check` to apply 3 suggestions)
+warning: unused variable: `req`
+  --> examples/p43_003.rs:10:5
+   |
+10 | let req = VectorSearchRequest::<MongoDbSearchFilter>::builder()
+   |     ^^^ help: if this is intentional, prefix it with an underscore: `_req`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `rig-optional-check` (example "p39_000") generated 2 warnings (run `cargo fix --example "p39_000" -p rig-optional-check` to apply 2 suggestions)
+warning: `rig-optional-check` (example "p45_003") generated 1 warning (run `cargo fix --example "p45_003" -p rig-optional-check` to apply 1 suggestion)
+warning: `rig-optional-check` (example "p43_003") generated 2 warnings (run `cargo fix --example "p43_003" -p rig-optional-check` to apply 2 suggestions)
+warning: unused variable: `agent`
+  --> examples/p39_001.rs:15:5
+   |
+15 | let agent = AgentBuilder::new(Ollama::new().native_completion(ollama::QWEN3))
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_agent`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `rig-optional-check` (example "p39_001") generated 3 warnings (run `cargo fix --example "p39_001" -p rig-optional-check` to apply 3 suggestions)
+warning: unused variable: `mcp`
+  --> examples/p47_003.rs:22:5
+   |
+22 | let mcp = handler.connect(transport).await?;
+   |     ^^^ help: if this is intentional, prefix it with an underscore: `_mcp`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `answer`
+  --> examples/p47_003.rs:31:5
+   |
+31 | let answer = agent.prompt("What is 2 + 5?").max_turns(2).await?.output();
+   |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_answer`
+
+warning: `rig-optional-check` (example "p47_003") generated 2 warnings (run `cargo fix --example "p47_003" -p rig-optional-check` to apply 2 suggestions)
+    Finished `dev` profile [unoptimized] target(s) in 1.56s

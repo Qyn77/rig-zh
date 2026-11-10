@@ -1,0 +1,18 @@
+[
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"=0.46.0\", features = [\"qdrant\"] }\nqdrant-client = \"=1.20.0\"\ntokio = { version = \"1\", features = [\"full\"] }\nanyhow = \"1\"\nserde = { version = \"1\", features = [\"derive\"] }\nserde_json = \"1\""
+  },
+  {
+    "lang": "bash",
+    "text": "docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant"
+  },
+  {
+    "lang": "rust",
+    "text": "use qdrant_client::{\n    Qdrant,\n    qdrant::{CreateCollectionBuilder, Distance, QueryPointsBuilder, VectorParamsBuilder},\n};\nuse rig::prelude::*;\nuse serde::{Deserialize, Serialize};\nuse rig::providers::openai::{self, OpenAI};\nuse rig::qdrant::QdrantVectorStore;\nuse rig::vector_store::InsertDocuments;\n\n\nconst COLLECTION_NAME: &str = \"rig-collection\";\n\n\n#[derive(Embed, Serialize, Deserialize, Debug)]\nstruct Word {\n    id: String,\n    #[embed]\n    definition: String,\n}\n\n\n#[tokio::main]\nasync fn main() -> Result<(), anyhow::Error> {\n    let client = Qdrant::from_url(\"http://localhost:6334\").build()?;\n\n\n    if !client.collection_exists(COLLECTION_NAME).await? {\n        client\n            .create_collection(\n                CreateCollectionBuilder::new(COLLECTION_NAME)\n                    .vectors_config(VectorParamsBuilder::new(1536, Distance::Cosine)),\n            )\n            .await?;\n    }\n\n\n    let model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\n    let documents = EmbeddingsBuilder::new(model.clone())\n        .document(Word {\n            id: \"doc0\".to_string(),\n            definition: \"A flurbo is a green alien that lives on cold planets.\".to_string(),\n        })?\n        .document(Word {\n            id: \"doc1\".to_string(),\n            definition: \"A linglingdong is a term used to describe humans.\".to_string(),\n        })?\n        .build()\n        .await?;\n\n\n    // The store queries the collection named in these parameters.\n    let query_params = QueryPointsBuilder::new(COLLECTION_NAME).with_payload(true);\n    let vector_store = QdrantVectorStore::new(client, model, query_params.build());\n\n\n    vector_store.insert_documents(documents).await?;\n\n\n    let req = VectorSearchRequest::builder()\n        .query(\"What is a linglingdong?\")\n        .samples(1)\n        .build();\n\n\n    for result in vector_store.top_n::<Word>(req).await? {\n        println!(\"{:.3} {} {}\", result.score, result.id, result.document.definition);\n    }\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::qdrant::QdrantFilter;\nuse rig::vector_store::request::SearchFilter;\n\n\nlet req = VectorSearchRequest::<QdrantFilter>::builder()\n    .query(\"What is a linglingdong?\")\n    .samples(1)\n    .filter(QdrantFilter::eq(\"id\", json!(\"doc1\")))\n    .build();"
+  }
+]

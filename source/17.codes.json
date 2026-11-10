@@ -1,0 +1,34 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{self, OpenAI};\n\n\nlet model = OpenAI::from_env()?.completion(openai::GPT_5_5).erase();\nlet writer = AgentBuilder::new(model.clone()).preamble(\"Draft a one-line tagline.\").build();\nlet editor = AgentBuilder::new(model).preamble(\"Tighten the tagline to under six words.\").build();"
+  },
+  {
+    "lang": "rust",
+    "text": "let draft = writer.prompt(\"A tool that compile-checks docs code samples\").await?.output();\nlet tagline = editor.prompt(draft.trim()).await?.output();\nprintln!(\"{tagline}\");"
+  },
+  {
+    "lang": "text",
+    "text": "Docs that always compile."
+  },
+  {
+    "lang": "rust",
+    "text": "#[derive(Deserialize, schemars::JsonSchema)]\nenum Category {\n    Code,\n    Math,\n    Other,\n}\n\n\nlet router = AgentBuilder::new(client.completion(openai::GPT_5_MINI))\n    .preamble(\"Classify the user's request.\")\n    .build();\n\n\nlet query = \"How do I borrow a value mutably twice?\";\nlet category = router.prompt_typed::<Category>(query).await?.output;\n\n\nlet answer = match category {\n    Category::Code => coder.prompt(query).await?,\n    Category::Math => mathematician.prompt(query).await?,\n    Category::Other => generalist.prompt(query).await?,\n};\nprintln!(\"{}\", answer.output());"
+  },
+  {
+    "lang": "rust",
+    "text": "let review = \"The new update is blazing fast, but the settings menu is confusing.\";\n\n\nlet (sentiment, topic) = futures::join!(\n    sentiment_agent.prompt(review).into_future(),\n    topic_agent.prompt(review).into_future(),\n);\n\n\nprintln!(\"sentiment={}, topic={}\", sentiment?.output(), topic?.output());"
+  },
+  {
+    "lang": "text",
+    "text": "sentiment=NEGATIVE, topic=usability"
+  },
+  {
+    "lang": "rust",
+    "text": "#[derive(Deserialize, schemars::JsonSchema)]\nstruct Plan {\n    /// One instruction per subtask.\n    subtasks: Vec<String>,\n}\n\n\nlet orchestrator = AgentBuilder::new(model.clone())\n    .preamble(\"Split the task into 2-4 independent writing subtasks.\")\n    .build();\nlet worker = AgentBuilder::new(model.clone())\n    .preamble(\"Complete the writing subtask you are given.\")\n    .build();\nlet editor = AgentBuilder::new(model)\n    .preamble(\"Merge the drafts into one coherent text.\")\n    .build();\n\n\nlet task = \"Write a product page for an insulated, plastic-free water bottle.\";\nlet plan = orchestrator.prompt_typed::<Plan>(task).await?.output;\n\n\n// Run every worker concurrently.\nlet drafts = futures::future::try_join_all(\n    plan.subtasks.iter().map(|subtask| worker.prompt(subtask.as_str()).into_future()),\n)\n.await?;\n\n\nlet combined = drafts.iter().map(|d| d.output()).collect::<Vec<_>>().join(\"\\n\\n\");\nlet page = editor.prompt(combined).await?.output();\nprintln!(\"{page}\");"
+  },
+  {
+    "lang": "rust",
+    "text": "#[derive(Deserialize, schemars::JsonSchema)]\nstruct Review {\n    approved: bool,\n    /// Concrete fixes, empty when approved.\n    feedback: String,\n}\n\n\nlet critic = AgentBuilder::new(model)\n    .preamble(\"Review the text. Approve it only if it is ready to publish.\")\n    .build();\n\n\nlet mut draft = writer.prompt(\"A tool that compile-checks docs code samples\").await?.output();\n\n\nfor _ in 0..3 {\n    let review = critic.prompt_typed::<Review>(draft.as_str()).await?.output;\n    if review.approved {\n        break;\n    }\n    let revision = format!(\"Revise this text:\\n{draft}\\n\\nAddress this feedback:\\n{}\", review.feedback);\n    draft = writer.prompt(revision).await?.output();\n}\nprintln!(\"{draft}\");"
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse rig::tool::{ToolContext, ToolExecutionError};\nuse serde::Deserialize;\nuse serde_json::json;\n\n\n#[derive(Deserialize)]\nstruct AddArgs {\n    x: i64,\n    y: i64,\n}\n\n\n// A tool implemented by hand against the `Tool` trait.\nstruct Add;\n\n\nimpl Tool for Add {\n    const NAME: &'static str = \"add\";\n    type Args = AddArgs;\n    type Output = i64;\n    type Error = ToolExecutionError;\n\n\n    fn description(&self) -> String {\n        \"Add x and y together\".to_string()\n    }\n\n\n    fn parameters(&self) -> serde_json::Value {\n        json!({\n            \"type\": \"object\",\n            \"properties\": {\n                \"x\": { \"type\": \"integer\", \"description\": \"The first number\" },\n                \"y\": { \"type\": \"integer\", \"description\": \"The second number\" }\n            },\n            \"required\": [\"x\", \"y\"]\n        })\n    }\n\n\n    async fn call(&self, _ctx: &mut ToolContext, args: AddArgs) -> Result<i64, ToolExecutionError> {\n        Ok(args.x + args.y)\n    }\n}\n\n\n// A tool generated from a function. The macro creates a unit struct named\n// after the function in PascalCase (`subtract` -> `Subtract`).\n#[rig::rig_tool(description = \"Subtract y from x\")]\nfn subtract(x: i64, y: i64) -> Result<i64, ToolExecutionError> {\n    Ok(x - y)\n}\n\n\n#[tokio::main]\nasync fn main() -> anyhow::Result<()> {\n    let calculator = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .preamble(\"You are a calculator. Use the provided tools to answer arithmetic questions.\")\n        .tool(Add)\n        .tool(Subtract)\n        .build();\n\n\n    let answer = calculator\n        .prompt(\"What is (5 - 2) + 10?\")\n        .max_turns(4)\n        .await?\n        .output();\n    println!(\"{answer}\");\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "text",
+    "text": "(5 - 2) + 10 = 13"
+  },
+  {
+    "lang": "rust",
+    "text": "use schemars::JsonSchema;\n\n\n#[derive(Deserialize, JsonSchema)]\nstruct AddArgs {\n    /// The first number to add.\n    x: i64,\n    /// The second number to add.\n    y: i64,\n}\n\n\nstruct Add;\n\n\nimpl Tool for Add {\n    const NAME: &'static str = \"add\";\n    type Args = AddArgs;\n    type Output = i64;\n    type Error = std::convert::Infallible;\n\n\n    fn description(&self) -> String {\n        \"Add x and y together\".to_string()\n    }\n\n\n    fn parameters(&self) -> serde_json::Value {\n        schemars::schema_for!(AddArgs).to_value()\n    }\n\n\n    async fn call(&self, _ctx: &mut ToolContext, args: AddArgs) -> Result<i64, Self::Error> {\n        Ok(args.x + args.y)\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::ToolExecutionError;\n\n\n/// Look up the current temperature for a city.\n#[rig::rig_tool(params(city = \"City name, e.g. `Paris`\"))]\nasync fn get_weather(\n    city: String,\n    /// Temperature unit: `celsius` (default) or `fahrenheit`.\n    unit: Option<String>,\n) -> Result<String, ToolExecutionError> {\n    let unit = unit.unwrap_or_else(|| \"celsius\".to_string());\n    if city.is_empty() {\n        return Err(ToolExecutionError::invalid_args(\"`city` must not be empty\"));\n    }\n    Ok(format!(\"It is 21 degrees {unit} in {city}.\"))\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::ToolOutput;\n\n\nlet text = ToolOutput::text(\"Search complete: 3 results.\");\nlet json = ToolOutput::json(json!({ \"count\": 3 }));\n// Several blocks, including images, for multimodal tools.\nlet blocks = ToolOutput::content(vec![\n    ToolResultContent::text(\"Here is the chart:\"),\n    ToolResultContent::json(json!({ \"series\": [1, 2, 3] })),\n])?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::ToolExecutionError;\n\n\n#[derive(Debug, thiserror::Error)]\nenum LookupError {\n    #[error(\"no customer with id {0}\")]\n    NotFound(String),\n    #[error(\"database unreachable at {0}\")]\n    Database(String),\n}\n\n\n#[derive(Deserialize)]\nstruct LookupArgs {\n    id: String,\n}\n\n\nstruct LookupCustomer;\n\n\nimpl Tool for LookupCustomer {\n    const NAME: &'static str = \"lookup_customer\";\n    type Args = LookupArgs;\n    type Output = String;\n    type Error = LookupError;\n\n\n    fn description(&self) -> String {\n        \"Look up a customer by id\".to_string()\n    }\n\n\n    fn parameters(&self) -> serde_json::Value {\n        json!({\n            \"type\": \"object\",\n            \"properties\": { \"id\": { \"type\": \"string\" } },\n            \"required\": [\"id\"]\n        })\n    }\n\n\n    fn map_error(&self, error: LookupError) -> ToolExecutionError {\n        match error {\n            // Safe and useful for the model: say what went wrong.\n            LookupError::NotFound(_) => ToolExecutionError::not_found(error.to_string()),\n            // The message names an internal host: log it, tell the model less.\n            LookupError::Database(_) => ToolExecutionError::network(error.to_string())\n                .with_model_feedback(\"the customer database is unavailable; try again later\")\n                .with_code(\"DB_DOWN\")\n                .with_source(error),\n        }\n    }\n\n\n    async fn call(&self, _ctx: &mut ToolContext, args: LookupArgs) -> Result<String, LookupError> {\n        Err(LookupError::NotFound(args.id))\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::ToolExecutionError;\n\n\n/// The signed-in user. Set by the host, never by the model.\n#[derive(Serialize, Deserialize, rig::ContextValue)]\nstruct UserId(String);\n\n\n/// Host-only metadata the tool reports back about its call.\n#[derive(Serialize, Deserialize, rig::ContextValue)]\n#[context(key = \"orders.rows_read\")]\nstruct RowsRead(usize);\n\n\n#[derive(Deserialize)]\nstruct NoArgs {}\n\n\nstruct ListOrders;\n\n\nimpl Tool for ListOrders {\n    const NAME: &'static str = \"list_orders\";\n    type Args = NoArgs;\n    type Output = Vec<String>;\n    type Error = ToolExecutionError;\n\n\n    fn description(&self) -> String {\n        \"List the signed-in user's recent orders\".to_string()\n    }\n\n\n    fn parameters(&self) -> serde_json::Value {\n        json!({ \"type\": \"object\", \"properties\": {} })\n    }\n\n\n    async fn call(&self, ctx: &mut ToolContext, _args: NoArgs) -> Result<Vec<String>, ToolExecutionError> {\n        let user = ctx.require::<UserId>()?;\n        let orders = vec![format!(\"order #1001 for {}\", user.0)];\n        ctx.insert_result(RowsRead(orders.len()))?;\n        Ok(orders)\n    }\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::ToolContext;\n\n\nlet mut context = ToolContext::new();\ncontext.insert(UserId(\"u_42\".to_string()))?;\n\n\nlet reply = agent\n    .prompt(\"What did I order recently?\")\n    .tool_context(context)\n    .max_turns(3)\n    .await?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::message::ToolName;\nuse rig::tool::{DynamicTool, ToolExecutionError, ToolOutput};\n\n\nlet echo = DynamicTool::new(\n    ToolName::new(\"echo\")?,\n    \"Repeat the input text back\",\n    json!({\n        \"type\": \"object\",\n        \"properties\": { \"text\": { \"type\": \"string\" } },\n        \"required\": [\"text\"]\n    }),\n    |args| {\n        Box::pin(async move {\n            let text = args[\"text\"]\n                .as_str()\n                .ok_or_else(|| ToolExecutionError::invalid_args(\"`text` must be a string\"))?;\n            Ok(ToolOutput::text(text))\n        })\n    },\n);\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .dynamic_tool(echo)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::builtin::ThinkTool;\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .tool(ThinkTool)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::ToolEmbedding;\n\n\n#[derive(Debug, thiserror::Error)]\n#[error(\"init error\")]\nstruct InitError;\n\n\n#[derive(Deserialize)]\nstruct AddArgs { x: i64, y: i64 }\n\n\nstruct Add;\n\n\nimpl Tool for Add {\n    const NAME: &'static str = \"add\";\n    type Args = AddArgs;\n    type Output = i64;\n    type Error = std::convert::Infallible;\n\n\n    fn description(&self) -> String {\n        \"Add x and y together\".to_string()\n    }\n\n\n    fn parameters(&self) -> serde_json::Value {\n        json!({\n            \"type\": \"object\",\n            \"properties\": { \"x\": { \"type\": \"integer\" }, \"y\": { \"type\": \"integer\" } },\n            \"required\": [\"x\", \"y\"]\n        })\n    }\n\n\n    async fn call(&self, _ctx: &mut ToolContext, args: AddArgs) -> Result<i64, Self::Error> {\n        Ok(args.x + args.y)\n    }\n}\n\n\nimpl ToolEmbedding for Add {\n    type InitError = InitError;\n    type Context = ();\n    type State = ();\n\n\n    fn init(_state: (), _context: ()) -> Result<Self, InitError> {\n        Ok(Add)\n    }\n\n\n    fn embedding_docs(&self) -> Vec<String> {\n        vec![\"Add x and y together\".into(), \"sum, plus, addition\".into()]\n    }\n\n\n    fn context(&self) {}\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::ToolSet;\n\n\nlet client = OpenAI::from_env()?;\nlet embedding_model = client.embedding(openai::TEXT_EMBEDDING_3_SMALL, None).erase();\n\n\nlet mut toolset = ToolSet::default();\ntoolset.add_retrieved_tool(Add)?;\n\n\nlet embeddings = EmbeddingsBuilder::new(embedding_model.clone())\n    .documents(toolset.schemas()?)?\n    .build()\n    .await?;\nlet index = InMemoryVectorStore::from_documents_with_id_f(embeddings, |tool| tool.name.clone())\n    .index(embedding_model);\n\n\nlet agent = AgentBuilder::new(client.completion(openai::GPT_5_5))\n    .preamble(\"You are a calculator.\")\n    .retrieved_tools(1, index, toolset)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::tool::server::ToolServer;\n\n\nlet tools = ToolServer::new().tool(ThinkTool).run();\n\n\nlet model = OpenAI::from_env()?.completion(openai::GPT_5_5);\nlet researcher = AgentBuilder::new(model.clone())\n    .tool_server_handle(tools.clone())\n    .build();\nlet writer = AgentBuilder::new(model)\n    .tool_server_handle(tools.clone())\n    .build();\n\n\n// Changes to the server reach both agents.\ntools.remove_tool(\"think\");"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::completion::CompletionRequest;\nuse rig::message::{AssistantContent, Message};\nuse rig::tool::ToolSet;\n\n\nlet model = OpenAI::from_env()?.completion(openai::GPT_5_5);\nlet mut tools = ToolSet::default();\ntools.add_tool(ThinkTool);\n\n\nlet request = CompletionRequest::new(Message::user(\"Think about 2 + 2, then answer.\"))\n    .tools(tools.tool_definitions());\nlet response = model.call(request).await?;\n\n\nfor content in &response.choice {\n    if let AssistantContent::ToolCall(call) = content {\n        let args = serde_json::to_string(&call.function.arguments)?;\n        let result = tools\n            .execute(&call.function.name, args, &mut ToolContext::new())\n            .await;\n        println!(\"{} -> {}\", call.function.name, result.output().render());\n    }\n}"
+  }
+]

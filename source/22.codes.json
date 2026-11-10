@@ -1,0 +1,18 @@
+[
+  {
+    "lang": "toml",
+    "text": "rig = { version = \"0.44.0\", features = [\"cassette\"] }"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::cassette::agent::AgentReplayExt;\nuse rig::cassette::effect_log::EffectLogRecorder;\nuse rig::providers::openai::{self, OpenAI};\n\n\nlet recorder = EffectLogRecorder::new();\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You are a helpful assistant.\")\n    .record_to(recorder.clone())\n    .build();\n\n\nlet response = agent.prompt(\"Name three Rust web frameworks.\").await?;\nprintln!(\"{}\", response.output());\n\n\nlet log = agent.stamp(recorder.take());\nstd::fs::write(\"frameworks.effects.json\", serde_json::to_string_pretty(&log)?)?;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::bus::Bus;\nuse rig::cassette::agent::replay::register_all;\nuse rig::cassette::effect_log::EffectLog;\n\n\nlet log: EffectLog = serde_json::from_str(&std::fs::read_to_string(\"frameworks.effects.json\")?)?;\n\n\n// A bus whose handlers are the log's replayers.\nlet (dispatcher, registrar, mut driver) = Bus::channel();\nregister_all(&log, &mut driver)?;\ntokio::spawn(driver);\n\n\n// The same agent, sending its model calls to the recorded model key.\nlet model_key = log[0].key.clone();\nlet agent = AgentBuilder::over_bus(dispatcher, registrar, \"replay\", model_key)\n    .preamble(\"You are a helpful assistant.\")\n    .build();\n\n\nlet response = agent.prompt(\"Name three Rust web frameworks.\").await?;\nprintln!(\"{}\", response.output()); // the recorded answer, no provider called"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::cassette::effect_log::EffectLogReplayer;\nuse rig::effect::EffectFamily;\nuse rig::tool::server::ToolServer;\nuse rig::tool::RegisteredTool;\n\n\nlet tools = ToolServer::new().run();\nif let Some(record) = log.iter().find(|r| r.kind.family() == EffectFamily::Tool) {\n    let replayer = EffectLogReplayer::for_key(&log, &record.key)?;\n    tools.add_registered_tool(RegisteredTool::from_handler(replayer)?);\n}\n\n\nlet agent = AgentBuilder::over_bus(dispatcher, registrar, \"replay\", model_key)\n    .tool_server_handle(tools)\n    .build();"
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"0.44.0\", features = [\"mongodb\"] }\nmongodb = \"3\"\ntokio = { version = \"1\", features = [\"full\"] }"
+  },
+  {
+    "lang": "json",
+    "text": "{\n  \"fields\": [\n    {\n      \"type\": \"vector\",\n      \"path\": \"embedding\",\n      \"numDimensions\": 1536,\n      \"similarity\": \"cosine\"\n    }\n  ]\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use mongodb::{Client as MongoClient, Collection, bson::{self, doc}};\nuse rig::mongodb::{MongoDbVectorIndex, SearchParams};\nuse rig::prelude::*;\nuse serde::{Deserialize, Serialize};\nuse rig::providers::openai::{self, OpenAI};\n\n\n#[derive(Embed, Clone, Serialize, Deserialize, Debug)]\nstruct Word {\n    id: String,\n    #[embed]\n    definition: String,\n}\n\n\n#[tokio::main]\nasync fn main() -> Result<(), anyhow::Error> {\n    let model = OpenAI::from_env()?.embedding(openai::TEXT_EMBEDDING_3_SMALL, None);\n\n\n    let mongo = MongoClient::with_uri_str(std::env::var(\"MONGODB_CONNECTION_STRING\")?).await?;\n    let collection: Collection<bson::Document> =\n        mongo.database(\"knowledgebase\").collection(\"context\");\n\n\n    // Embed the documents and store each with its vector in `embedding`.\n    let words = vec![\n        Word { id: \"doc0\".into(), definition: \"A flurbo is a green alien.\".into() },\n        Word { id: \"doc1\".into(), definition: \"A glarb-glarb is an ancient farming tool.\".into() },\n    ];\n    let embeddings = EmbeddingsBuilder::new(model.clone())\n        .documents(words)?\n        .build()\n        .await?;\n    let records = embeddings\n        .iter()\n        .map(|(word, embeddings)| {\n            doc! {\n                \"id\": word.id.clone(),\n                \"definition\": word.definition.clone(),\n                \"embedding\": embeddings.first().map(|e| e.vec.clone()),\n            }\n        })\n        .collect::<Vec<_>>();\n    collection.insert_many(records).await?;\n\n\n    // \"vector_index\" is the Atlas vector search index on this collection.\n    let index = MongoDbVectorIndex::new(collection, model, \"vector_index\", SearchParams::new()).await?;\n\n\n    let req = VectorSearchRequest::builder()\n        .query(\"What does glarb-glarb mean?\")\n        .samples(1)\n        .build();\n\n\n    for result in index.top_n::<Word>(req).await? {\n        println!(\"{:.3} {}\", result.score, result.document.definition);\n    }\n\n\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use mongodb::bson::Bson;\nuse rig::mongodb::MongoDbSearchFilter;\nuse rig::vector_store::request::SearchFilter;\n\n\nlet req = VectorSearchRequest::<MongoDbSearchFilter>::builder()\n    .query(\"What does glarb-glarb mean?\")\n    .samples(3)\n    .filter(MongoDbSearchFilter::eq(\"id\", Bson::from(\"doc1\")))\n    .build();"
+  }
+]

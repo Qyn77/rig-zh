@@ -1,0 +1,6 @@
+[
+  {
+    "lang": "mermaid",
+    "text": "flowchart TD\n    Client[\"Provider client\"] --> Model[\"Model\"]\n    Model --> Agent[\"Agent\"]\n    Tools[\"Tools\"] -.-> Agent\n    RAG[\"RAG<br/>(Embeddings + Vector Store)\"] -.-> Agent\n    Memory[\"Memory\"] -.-> Agent\n    Agent --> Output[\"Text or structured output\"]"
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "lang": "bash",
+    "text": "cargo new text_analysis\ncd text_analysis"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = \"=0.46.0\"\ntokio = { version = \"1\", features = [\"full\"] }\nanyhow = \"1\"\nserde = { version = \"1\", features = [\"derive\"] }\nschemars = \"1\""
+  },
+  {
+    "lang": "bash",
+    "text": "export OPENAI_API_KEY=your_api_key_here"
+  },
+  {
+    "lang": "rust",
+    "text": "use anyhow::Result;\nuse rig::extractor::ExtractorBuilder;\nuse rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse schemars::JsonSchema;\nuse serde::{Deserialize, Serialize};\n\n\n#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nenum Sentiment {\n    Positive,\n    Negative,\n    Neutral,\n}\n\n\n#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nstruct SentimentClassification {\n    sentiment: Sentiment,\n    confidence: f32,\n}\n\n\n#[tokio::main]\nasync fn main() -> Result<()> {\n    let model = OpenAI::from_env()?.completion(openai::GPT_5_5);\n\n\n    let classifier = ExtractorBuilder::<SentimentClassification>::new(model)\n        .append_preamble(\"Classify the sentiment of the given text.\")\n        .build();\n\n\n    let text = \"I absolutely loved the new restaurant. The food was amazing!\";\n    let result = classifier.extract(text).await?.output;\n\n\n    println!(\"Sentiment: {:?} ({:.2})\", result.sentiment, result.confidence);\n    Ok(())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nenum EntityType {\n    Person,\n    Organization,\n    Location,\n}\n\n\n#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nstruct Entity {\n    text: String,\n    entity_type: EntityType,\n}\n\n\n#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nstruct ExtractedEntities {\n    entities: Vec<Entity>,\n}\n\n\nlet ner = ExtractorBuilder::<ExtractedEntities>::new(model)\n    .append_preamble(\"Identify and extract people, organizations, and locations from the text.\")\n    .build();\n\n\nlet text = \"Apple Inc., based in Cupertino, was founded by Steve Jobs and Steve Wozniak.\";\nlet result = ner.extract(text).await?.output;\n\n\nfor entity in result.entities {\n    println!(\"{:?}: {}\", entity.entity_type, entity.text);\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nstruct TextAnalysis {\n    sentiment: SentimentClassification,\n    entities: Vec<Entity>,\n}\n\n\nlet analyzer = ExtractorBuilder::<TextAnalysis>::new(model)\n    .append_preamble(\n        \"For the given text: classify the overall sentiment with a confidence score, \\\n         and extract named entities (Person, Organization, Location).\",\n    )\n    .build();\n\n\nlet text = \"I had a great time visiting Google's headquarters in Mountain View. \\\n            Sundar Pichai's leadership has been impressive.\";\nlet result = analyzer.extract(text).await?.output;\n\n\nprintln!(\n    \"Sentiment: {:?} ({:.2})\",\n    result.sentiment.sentiment, result.sentiment.confidence\n);\nfor entity in &result.entities {\n    println!(\"- {:?}: {}\", entity.entity_type, entity.text);\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nenum Topic {\n    Politics,\n    Technology,\n    Sports,\n    Entertainment,\n    Other(String),\n}\n\n\n#[derive(Debug, Deserialize, Serialize, JsonSchema)]\nstruct NewsArticleAnalysis {\n    topic: Topic,\n    sentiment: SentimentClassification,\n    entities: Vec<Entity>,\n    key_points: Vec<String>,\n}"
+  }
+]

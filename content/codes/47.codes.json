@@ -1,0 +1,26 @@
+[
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"=0.46.0\", features = [\"rmcp\"] }\nrmcp = { version = \"=3.5.0\", features = [\"client\", \"transport-streamable-http-client-reqwest\"] }\ntokio = { version = \"1\", features = [\"full\"] }\nanyhow = \"1\""
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse rig::tool::DynamicTool;\nuse rig::tool::rmcp::McpConnection;\n\n// Connection owns the service; registered tools keep it alive.\nasync fn mcp_agent(connection: &McpConnection) -> anyhow::Result<Agent> {\n    let tools = connection\n        .tools()\n        .await?\n        .into_iter()\n        .map(DynamicTool::try_from)\n        .collect::<Result<Vec<_>, _>>()?;\n\n    Ok(AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n        .preamble(\"You can use the tools of an MCP server.\")\n        .dynamic_tools(tools)\n        .build())\n}"
+  },
+  {
+    "lang": "rust",
+    "text": "use rmcp::ServiceExt;\nuse rmcp::model::{ClientCapabilities, ClientConfig, Implementation};\nuse rmcp::transport::StreamableHttpClientTransport;\n\nlet client_config = ClientConfig::new(\n    ClientCapabilities::default(),\n    Implementation::new(\"my-agent\", \"0.1.0\"),\n);\nlet transport = StreamableHttpClientTransport::from_uri(\"http://localhost:8080\");\nlet connection = McpConnection::new(client_config.serve(transport).await?);\nlet agent = mcp_agent(&connection).await?;\nlet answer = agent.prompt(\"What is 2 + 5?\").await?.output();\nprintln!(\"{answer}\");\nconnection.close().await;"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::openai::{self, OpenAI};\nuse rig::tool::rmcp::McpClientHandler;\nuse rig::tool::server::ToolServer;\nuse rmcp::model::{ClientCapabilities, ClientConfig, Implementation};\n\n\nlet tool_server = ToolServer::new().run();\n\n\nlet client_config = ClientConfig::new(\n    ClientCapabilities::default(),\n    Implementation::new(\"my-agent\", \"0.1.0\"),\n);\nlet handler = McpClientHandler::new(client_config, tool_server.clone());\n\n\n// Connects, fetches the initial tool list, and keeps it in sync.\nlet transport = rmcp::transport::StreamableHttpClientTransport::from_uri(\"http://localhost:8080\");\nlet mcp = handler.connect(transport).await?;\n\n\nlet agent = AgentBuilder::new(OpenAI::from_env()?.completion(openai::GPT_5_5))\n    .preamble(\"You can use the tools of an MCP server.\")\n    .tool_server_handle(tool_server)\n    .build();\n\n\nlet answer = agent.prompt(\"What is 2 + 5?\").max_turns(2).await?.output();"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrmcp = { version = \"=3.5.0\", features = [\"server\", \"macros\", \"transport-streamable-http-server\"] }\nschemars = \"1\"\nserde = { version = \"1\", features = [\"derive\"] }"
+  },
+  {
+    "lang": "rust",
+    "text": "use rmcp::{\n    ServerHandler,\n    handler::server::{router::tool::ToolRouter, wrapper::Parameters},\n    model::{CallToolResult, ContentBlock, ErrorData, ServerCapabilities, ServerConfig},\n    schemars, tool, tool_handler, tool_router,\n};\n\n\n#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]\nstruct SumRequest {\n    a: i32,\n    b: i32,\n}\n\n\n#[derive(Clone)]\nstruct Calculator {\n    tool_router: ToolRouter<Calculator>,\n}\n\n\n#[tool_router]\nimpl Calculator {\n    fn new() -> Self {\n        Self { tool_router: Self::tool_router() }\n    }\n\n\n    #[tool(description = \"Calculate the sum of two numbers\")]\n    fn sum(&self, Parameters(SumRequest { a, b }): Parameters<SumRequest>) -> Result<CallToolResult, ErrorData> {\n        Ok(CallToolResult::success(vec![ContentBlock::text((a + b).to_string())]))\n    }\n}\n\n\n#[tool_handler(router = self.tool_router)]\nimpl ServerHandler for Calculator {\n    fn get_info(&self) -> ServerConfig {\n        ServerConfig::new(ServerCapabilities::builder().enable_tools().build())\n    }\n}"
+  }
+]

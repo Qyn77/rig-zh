@@ -1,0 +1,1388 @@
+{
+  "rig_version": "0.46.0",
+  "rustc": "1.97.1",
+  "checked_at": "2026-11-10",
+  "blocks": {
+    "00:0": {
+      "file": "examples/core/examples/p00_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "e1055396976d6bc3d58ae4bef1bb7e3a71b8d19b1a55250cce866ed9814e2777"
+    },
+    "02:3": {
+      "file": "examples/core/examples/p02_003.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "c1896d72f9fc6b7882d0056c84ca65c812ba32915f08655fec58dc9d0cd9bdf2"
+    },
+    "03:2": {
+      "file": "examples/core/examples/p03_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "08758afbd66fea80ee20ed8ab7f21d55e2d3b3bec93a54706e39bb4be0bde901"
+    },
+    "05:0": {
+      "file": "examples/core/examples/p05_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "d208f05af6acbb5f8686ac81fa7c2b413495ce6279a721cecf21fb0fb2a13245"
+    },
+    "05:1": {
+      "file": "examples/core/examples/p05_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "6f4446b5c0f20262030ad6f7c9d193b661b4e152840f3d93ea258e62692720dc"
+    },
+    "05:2": {
+      "file": "examples/core/examples/p05_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "0107f0098b5a74e5a968332a6a5c1fee61c87ff678dcdbfd3b633c6214010d64"
+    },
+    "05:3": {
+      "file": "examples/core/examples/p05_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "09614463eddf5e150cca79a827024116257c49832d57e2a2a23e428377cc8e31"
+    },
+    "05:4": {
+      "file": "examples/core/examples/p05_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "33f1830f92193be4c5c5aeb5173d3a970e5d7ec885c0ff4cf501c27bcab27b13"
+    },
+    "05:5": {
+      "file": "examples/core/examples/p05_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "cdc0ec6c283f2ae3e199bcf08bf0dc3dff6397bb2012a63bcd1a3975724a02bd"
+    },
+    "05:7": {
+      "file": "examples/core/examples/p05_007.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "0068a6cc99b2b55be7b4cb960419534cf944b98e7345c7bd15b57f7fcb6e66e2"
+    },
+    "06:0": {
+      "file": "examples/core/examples/p06_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "c7a12c31595f3893db8f7a4da57ea3fbcc410d7078616b745561c68657bca2b9"
+    },
+    "06:1": {
+      "file": "examples/core/examples/p06_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "d2730f7557b3d3d29c07f30f52783c6b23315d0bc7c2ed8f6639004a949606e6"
+    },
+    "06:2": {
+      "file": "examples/core/examples/p06_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "91d356be70d6ca603de2ac5bb104818e21768f09e0f02406ae2b01e013026630"
+    },
+    "06:3": {
+      "file": "examples/core/examples/p06_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "970d2101c055de2c06be038ea1964ba97dabe37c581089a4b991a80297bcf08f"
+    },
+    "06:4": {
+      "file": "examples/core/examples/p06_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "e44454109e71e94ea8cf942d9d79ff7019881a330dcd4f3ebdda47f52ec0c470"
+    },
+    "06:5": {
+      "file": "examples/core/examples/p06_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "dff6a8793be586794b4bb42b20b3f0e3219aafb3b6d75472e786bd4595ba00b1"
+    },
+    "06:6": {
+      "file": "examples/core/examples/p06_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "ed0c72bd21c51602da6b7b238d81ce1c913e625daef06c9f6a310bdbc8f38fff"
+    },
+    "06:7": {
+      "file": "examples/core/examples/p06_007.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "83f17253b793d642f527b13bfa673a4c8bb1614eea03465c2f5fc2552abc19a4"
+    },
+    "07:0": {
+      "file": "examples/core/examples/p07_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "3d2a7bdd0f818cf8abd692c52d841ebe40d26f9236792e620559ce9592866e8e"
+    },
+    "07:3": {
+      "file": "examples/core/examples/p07_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "33b6c46e4c8d2ebee29a24eef2d74d4f651ed017778258c34528edf05fe65e8f"
+    },
+    "07:5": {
+      "file": "examples/core/examples/p07_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "73a8a5fa867e15ba00f79eb2da58d58d2041fa05e91e2d1ea6bf178aad042490"
+    },
+    "07:7": {
+      "file": "examples/core/examples/p07_007.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "12d95e9e11e1c2bdd175b1e0e7e7aca3479399f8814a4363ecd83b17115da1a5"
+    },
+    "07:8": {
+      "file": "examples/core/examples/p07_008.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "0fd922170d88b7681346635cd48598d1930f11c74e071f3a1bd4102f45942111"
+    },
+    "07:9": {
+      "file": "examples/core/examples/p07_009.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "11a149f68e1d5793e1c472df6f610c1aeeaa6e9d5e072692d390867398dc4e59"
+    },
+    "07:10": {
+      "file": "examples/core/examples/p07_010.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "3d57749080f37f16be1a22a3dd91ca9129dbcdb9762735208aa967db8dcb6628"
+    },
+    "07:11": {
+      "file": "examples/core/examples/p07_011.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "f8c4d8f37ca19c0d13e9ddbfdb496c78a42375d1ac7cfedd2bbdedf5ee65116f"
+    },
+    "07:12": {
+      "file": "examples/core/examples/p07_012.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "53852b8f188674933da566c408787d801351c536a2edcaccc056c7d7c99e4313"
+    },
+    "08:0": {
+      "file": "examples/core/examples/p08_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "d3781f9dff3b934332203360ccdcc72027e20906845662574dac04781bdfcdb0"
+    },
+    "08:1": {
+      "file": "examples/core/examples/p08_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "4786fe1f37f163203d58f3fd74e4030ff22478f4cedf4f4257c6dede85e5d1c5"
+    },
+    "08:3": {
+      "file": "examples/core/examples/p08_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "5142b616cea832b3f135ce8e361e2cdf3ba551eef7fc07c5b37c24d8dc7de7b5"
+    },
+    "08:4": {
+      "file": "examples/core/examples/p08_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "0d00d81f805c4ea83893e1f5ab5d7040433f80218d1d773e1373ffd044d34ab3"
+    },
+    "08:5": {
+      "file": "examples/core/examples/p08_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "1217a7251326070675b0f6a1616d89391c59c91625497ff880e4b8c5d80808bb"
+    },
+    "09:0": {
+      "file": "examples/core/examples/p09_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "35fd313374746cd3401823856517144cc6129f564b06995f529d4276414e7226"
+    },
+    "09:1": {
+      "file": "examples/core/examples/p09_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "9e149c085bc0aadc9413f894920df7ff990236284a892d34188bbe82a25d7be4"
+    },
+    "09:2": {
+      "file": "examples/core/examples/p09_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "efc9dfc7a8d9328ab3b8da575fceabf175798039033f299f1efaf1c1ff27bd0e"
+    },
+    "09:3": {
+      "file": "examples/core/examples/p09_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "45fdc8454f7f01f416bf7f9ce836adf28f430786396c8277b384419623fc98dd"
+    },
+    "09:4": {
+      "file": "examples/core/examples/p09_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "31b588edd6afbc870cd643d42467cf39b451bd95a95f0888384e6f3b36d51c74"
+    },
+    "09:5": {
+      "file": "examples/core/examples/p09_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "6d262bed92701a687847f89577cd6d6f7ac65790e2a739635ee2aac808b390fb"
+    },
+    "09:6": {
+      "file": "examples/core/examples/p09_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "4eba1c4267f1010cee14eacdde02df3d975e03ff68cb9a257e6fd5549554cd43"
+    },
+    "10:1": {
+      "file": "examples/core/examples/p10_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "ae511334935eabac7ace8ed59cb87c7dea8a092d5a1d3272d96d8fc97c126d9a"
+    },
+    "11:0": {
+      "file": "examples/core/examples/p11_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "41849f1006975f1d97acf943f68bbb8b411bd412cbd375b539c39392da218bed"
+    },
+    "11:2": {
+      "file": "examples/core/examples/p11_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "b9b56a54b85f149de12d52b8568d015f0d5fd8303d314b34eb5e14f4dacbf920"
+    },
+    "11:3": {
+      "file": "examples/core/examples/p11_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "3d3f070aeba83aa5e2cffbb5eae13eb4513886c356dd8f2b9f7d88e6fb5183d5"
+    },
+    "11:4": {
+      "file": "examples/core/examples/p11_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "21d85bad588fe8c5c28c90450663cb72f0cd0c2499efd54fe92b96fe6451c613"
+    },
+    "11:5": {
+      "file": "examples/core/examples/p11_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "e310dd7aeb14eaf9c8a353a105d30e65b86cf5a7b53db74e5716d697b6aab888"
+    },
+    "11:6": {
+      "file": "examples/core/examples/p11_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "e294edc5fcc1d16944f91048145fd0ee143a945f2d62ccbe1840e015d46c8620"
+    },
+    "11:7": {
+      "file": "examples/core/examples/p11_007.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "1bd9702dd61228ee40149bdca666bd2c8f868ac4ed74f13a66b60e5486e0a0bc"
+    },
+    "11:8": {
+      "file": "examples/core/examples/p11_008.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "242f89ec71be8874148751d85f842b120da29db1a66d5548eca1cac24d2dba4d"
+    },
+    "11:9": {
+      "file": "examples/core/examples/p11_009.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "9d56495363b7ea7e9e91346db5f144fe5e74b01cd7f76f16bd875523907cfa45"
+    },
+    "11:10": {
+      "file": "examples/core/examples/p11_010.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "fb568ffd29dfa64dc320fd60bcb0f045c2b3504ec62af3e3964c53a8b92bea7d"
+    },
+    "11:11": {
+      "file": "examples/core/examples/p11_011.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "c4a841eeff03f63ca843e4c191520cf509e0161fc954a3ac5cf732a68ca5b31e"
+    },
+    "11:12": {
+      "file": "examples/core/examples/p11_012.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "47d17d5526dc87ebffde1bebf123c716b767cae98a223ef90783332b613080cd"
+    },
+    "11:13": {
+      "file": "examples/core/examples/p11_013.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "d3a397cad592fdcd9357ede94dd621c6f835522ed603fc45c4b4207ae2bc85ec"
+    },
+    "12:0": {
+      "file": "examples/core/examples/p12_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "9c3c0d3208cd645c31aa5c920dab21b5d7d79ec5ffa9d7bbff807716a7ba7f73"
+    },
+    "12:2": {
+      "file": "examples/core/examples/p12_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "705d6d9a44104c6991a186c6a84cdbcd10574d451e891b15e45c608eecbe8c90"
+    },
+    "12:3": {
+      "file": "examples/core/examples/p12_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "490d5ff47bc40b0d53fb2559201b5fa7bf42a614c4f546eba58c299f348f1dc0"
+    },
+    "12:4": {
+      "file": "examples/core/examples/p12_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "a5c05cc315620a2bb1f266356afee913b28950dafb90f3c19971ab3d23fbf364"
+    },
+    "12:5": {
+      "file": "examples/core/examples/p12_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "ce570defed5546d9bda345483bcea9d9d05a303af9daa01ff9cd0094fbc434bf"
+    },
+    "13:0": {
+      "file": "examples/core/examples/p13_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "e9f3ec178e379ea1740df415f133dd5926a6f548a8ad381597c701f34834c8c5"
+    },
+    "13:2": {
+      "file": "examples/core/examples/p13_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "065632cb51c327fbdb95e0af5c5956a4ff0222702cf4c55787adc2a368612728"
+    },
+    "13:3": {
+      "file": "examples/core/examples/p13_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "716f69f18a32b84afc06cbf852830cf53d9893a7713b450694fb4fc14adc9a50"
+    },
+    "13:4": {
+      "file": "examples/core/examples/p13_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "8ef754952218d76300a3ee05c8afba2a3c0aebfc207aecd2abc5ee077c57937c"
+    },
+    "13:5": {
+      "file": "examples/core/examples/p13_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "45236ed6c5ccef2bdb1f2ebfc3d0c91a5e90d8e5dc599f2cbcb9f5eb88ee3f71"
+    },
+    "13:6": {
+      "file": "examples/core/examples/p13_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "f31cc36ade19b29c78d13bb2e794fba23e155b32dd1c0f53933e536daa386cf1"
+    },
+    "14:0": {
+      "file": "examples/core/examples/p14_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "9649418e0d75d1426d1f8abea39ee89c631433a8afd850095b1509cfb30f648f"
+    },
+    "14:2": {
+      "file": "examples/core/examples/p14_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "af8eaed2da83633a6ea1aa4d8345440667149a2ad10e32ad3e1a65e597b4a368"
+    },
+    "14:3": {
+      "file": "examples/core/examples/p14_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "0a6c683157502a697f18a5c8878a5a3abbf433f724f4e4486312bf673f7b2150"
+    },
+    "14:4": {
+      "file": "examples/core/examples/p14_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "11137c31a79dddb1d0eab7d49288da68cceab5af73844b235922c748650ab0c7"
+    },
+    "14:5": {
+      "file": "examples/core/examples/p14_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "ec99fc9bcaf85950da769eea328561fee661647a486fd62aa407f09defec7d33"
+    },
+    "14:6": {
+      "file": "examples/core/examples/p14_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "aaa66f2d8e06db0476c0a9234e6c677ef6d2d63866a4bc3336120ab3e1fc9bf8"
+    },
+    "14:7": {
+      "file": "examples/core/examples/p14_007.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "545d44b30c43a3d90e33bbf5b412fa687cc88379b233d55f8b3c90eff40ce526"
+    },
+    "15:0": {
+      "file": "examples/core/examples/p15_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "e284ba9dc835cf481e3a09f2cfbf5cf62113a0477aef8948f2414b944661f09e"
+    },
+    "15:2": {
+      "file": "examples/core/examples/p15_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "4552d72e9c51d074c74a7772538f009a092e7b457edf1e5185724f943924b5da"
+    },
+    "15:4": {
+      "file": "examples/core/examples/p15_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "0a46968193e31d4f7b35d67f36cd5fb8c6f166354de88b5a0b7b9ccf67065909"
+    },
+    "15:5": {
+      "file": "examples/core/examples/p15_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "226d8247272cd3c6dabd8961bcf49b54dbefe8eefce0c544fbba142f53430c25"
+    },
+    "17:0": {
+      "file": "examples/core/examples/p17_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "7dc8dfca1ad40cc5a6c477b48505a956a9ac6aaa23eb76ed3fe405f13c07a350"
+    },
+    "17:1": {
+      "file": "examples/core/examples/p17_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "68548ea0ca120e49fcfcabc53f91a74c80f690b7f2429a3cc49a7f7c9ccb3fa5"
+    },
+    "17:3": {
+      "file": "examples/core/examples/p17_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "295e026b90c8af4cf5560cfe1327723b563b86ac4db049eb8a3db20841dc1007"
+    },
+    "17:4": {
+      "file": "examples/core/examples/p17_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "c3b1f55397644dc7c387035c85ad3d9bec0493948452faf7b405c76136434383"
+    },
+    "17:6": {
+      "file": "examples/core/examples/p17_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "7427dd2596d3892641d27a2ca80242e37c713bac883d66c2779317e5c43f35f0"
+    },
+    "17:7": {
+      "file": "examples/core/examples/p17_007.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "9b11b865e73015be2772316f4fcae84f7283788bda9bc61a9b422ca82aa0ec55"
+    },
+    "18:0": {
+      "file": "examples/core/examples/p18_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "747a8f19078faf0daa74234c3d95b03d8494e08f956c8feebef3f3bc38791f6c"
+    },
+    "18:1": {
+      "file": "examples/core/examples/p18_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "cfef283b1bc5afd29337a9657aa111d592b8019ff360d657f414c6430d6daddb"
+    },
+    "18:2": {
+      "file": "examples/core/examples/p18_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "237cde1d0a409add6f6ff1e7030d0e22be6cb5177de45fd6945649fd035bdf5c"
+    },
+    "18:3": {
+      "file": "examples/core/examples/p18_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "2610607a53a33f06a60e9382f0f16888f08d3593a6e8e36be79f3b3d14a6959d"
+    },
+    "18:4": {
+      "file": "examples/core/examples/p18_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "79871950614bf83ef1524a880673011084c5f24845f118585b5dd3550b722e16"
+    },
+    "19:0": {
+      "file": "examples/core/examples/p19_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "872d3eb97496bb83559af96832f10a1a4b689b076952e86b583c7954326f17a4"
+    },
+    "19:1": {
+      "file": "examples/core/examples/p19_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "01602232f9cee4845d9b7c3fdb1686e9f46466c2bfcbd637e307378a611b31fb"
+    },
+    "19:2": {
+      "file": "examples/core/examples/p19_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "7ce5fa31255fca45bce72f2dc64cd8a00fecbe3514df94dc04851d104517c616"
+    },
+    "19:3": {
+      "file": "examples/core/examples/p19_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "e759b201ba6a872d335de9e4ae99043bf37300bbc12e3a285db93d1a5f346455"
+    },
+    "21:1": {
+      "file": "examples/core/examples/p21_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "cf6b910d5aee6069a054c733e31e071d93ec6dfa8336995fc72642ed69182b02"
+    },
+    "21:2": {
+      "file": "examples/core/examples/p21_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "985c3811a5fbcf07d5b83c4748fb25a9b3ccb7af3d9d73b98a76464c36cff801"
+    },
+    "21:3": {
+      "file": "examples/core/examples/p21_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "4450016bf147844a187cc810435a3b6ea2099089d122dcc48eb3c3f3cbd66589"
+    },
+    "21:4": {
+      "file": "examples/core/examples/p21_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "c07ba64b7b6b7036f8eae3d8211fd7af25bea9ee4f98a3c3824c6a03ede8823a"
+    },
+    "21:5": {
+      "file": "examples/core/examples/p21_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "eb12ee44512b6cccae1879e94eeb4d7ad6293b52c287e6685f002139393de506"
+    },
+    "23:0": {
+      "file": "examples/core/examples/p23_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "26952f1cfb9e01cb71aedd80282c8448d68afdd5127060eaa41dbbd2c029cc61"
+    },
+    "23:1": {
+      "file": "examples/core/examples/p23_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "83096b94e84d1b73bc99f060c6fdf02f9d748b7e56786c37e9a7a0ca53a50c35"
+    },
+    "23:2": {
+      "file": "examples/core/examples/p23_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "1b2a9cf7bda27e400415a7e8fa4abc21f1790317f3e62de0dd9c8246c3a2df5c"
+    },
+    "23:3": {
+      "file": "examples/core/examples/p23_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "3e28b95b244c75f7f596a660a3d6334b20e9abe605c630ff86ebd0d5f6ae768f"
+    },
+    "23:4": {
+      "file": "examples/core/examples/p23_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "92b4e3ecea2427e3eaf6eac68c951bc4aa7d059cb510b5a7ae8c8f572bd54a58"
+    },
+    "25:3": {
+      "file": "examples/core/examples/p25_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "e95c07b820737ed1f152cec553b35d340fed1c6732cc66171d84010e9996c7fe"
+    },
+    "25:4": {
+      "file": "examples/core/examples/p25_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "14020085a4bccb931f0b4efc28ea7b1f81fcdf393884ada8f694c8d24ad1132d"
+    },
+    "25:5": {
+      "file": "examples/core/examples/p25_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "d0cbd27405cac47ce334d85f802f8a367eba96e1b90961749d05c5ece8c583c2"
+    },
+    "25:6": {
+      "file": "examples/core/examples/p25_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "8f65cd00402f3489299b8ac736c49c2954c0b6e774fd67e4acafc2ae4ccd4386"
+    },
+    "25:7": {
+      "file": "examples/core/examples/p25_007.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "fca5ef85376da63b2cbaa1e1b38f902ba732d65b8056c10d5f895a0947fc3a8c"
+    },
+    "25:8": {
+      "file": "examples/core/examples/p25_008.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "05776042c9790cf40f68fcddb60a9f64f9479abe12f564329fafdf40c44171f3"
+    },
+    "26:3": {
+      "file": "examples/core/examples/p26_003.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "496aaeea94c6eb23defdc76f7cc20a655009a176d999323d404ca6ed5a31cbfb"
+    },
+    "26:4": {
+      "file": "examples/core/examples/p26_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "c4783057dbef682f66b1e7eff9045d76e6a87d50feab1ccd3a6a310b88e0eebf"
+    },
+    "26:5": {
+      "file": "examples/core/examples/p26_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "156f2002bafa444220fc39a79afb2c9f2c643c3538b9db26fd696d704933b4f9"
+    },
+    "26:6": {
+      "file": "examples/core/examples/p26_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "62ffb87f4c9a4e67c5a1b68b5aa077a87e325f0e84b8e46896187f748d415e06"
+    },
+    "27:1": {
+      "file": "examples/core/examples/p27_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "73e2ec223e3f916e61fc322aa60d574ebf617736731b0513b9f8d4f48873c62e"
+    },
+    "27:2": {
+      "file": "examples/core/examples/p27_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "6d16a4fd469ea8264e6e59b0610edfa5f230f8f3f3fde732c191fd919145bcdc"
+    },
+    "27:3": {
+      "file": "examples/core/examples/p27_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "cac55bc49831c368d90206c31f61bee109a4c2d3f155f1b988e17baeceaac773"
+    },
+    "27:4": {
+      "file": "examples/core/examples/p27_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "9ab6812b5cee5605126f454a773fc44252566c8d08e4cd7424973104145888d9"
+    },
+    "28:1": {
+      "file": "examples/core/examples/p28_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "1bca74dde8951e50d5378d3221dca25a5ca30d039b59a95575ef608d9321e433"
+    },
+    "28:2": {
+      "file": "examples/core/examples/p28_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "a5ed119241331cd6858fd1766fe678549a55aa2cda0bb7fbf4fabea3ff90f1f4"
+    },
+    "28:3": {
+      "file": "examples/core/examples/p28_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "b6a9cd3f7ce89a435a0d2a779dc143f8aa6060075c5e102abc934a724914e19c"
+    },
+    "28:4": {
+      "file": "examples/core/examples/p28_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "c495ad0b4f302306529a6a5efe1259655111d2ef2625e6c76228d84489dea333"
+    },
+    "28:5": {
+      "file": "examples/core/examples/p28_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "6d6258753abaa90be70e79fbdda7ed83255bf9dfb266e248e40f2146429e600f"
+    },
+    "31:0": {
+      "file": "examples/core/examples/p31_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "af7ddca27b804287833fe2524493f81a51af5712f3d5f1f1d4a2069a3591143d"
+    },
+    "31:1": {
+      "file": "examples/core/examples/p31_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "8dc51ab6bb620ffebc8c23b05c6a9b37eeb0b2baa7d12b0d6e17c4beebfded6b"
+    },
+    "31:2": {
+      "file": "examples/core/examples/p31_002.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "c3e3df61b7b77b379d57285f9119ef1ff54a02e2d2a27dcd6dcc7bf0d278d8e7"
+    },
+    "31:3": {
+      "file": "examples/core/examples/p31_003.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "d0e74192da8f354bede239b9e7c883335e94ce9a4f4a551f66a42897e76a203f"
+    },
+    "35:1": {
+      "file": "examples/core/examples/p35_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "5aee58f88c41effb2fa290df5581045697035197331c228b10bfc43445b59f5d"
+    },
+    "36:0": {
+      "file": "examples/core/examples/p36_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "95e9620b2e06f735f7a178082a64dea918c3ddcb21167c4fa05430b24770bca0"
+    },
+    "37:0": {
+      "file": "examples/core/examples/p37_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "008384e88df06eea940de55ae206af3250994179845d43532b1a3ef0fb4159be"
+    },
+    "37:1": {
+      "file": "examples/core/examples/p37_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "406924cabaceec35227ce27f423e95abb55c2e6826127093f03208c4d7dd0c7b"
+    },
+    "37:2": {
+      "file": "examples/core/examples/p37_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "6a6d7758faf5ff2a65a80583941830a5bad823d5f52fc111ae34dbc88a3f868b"
+    },
+    "37:3": {
+      "file": "examples/core/examples/p37_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "843e645bcbc2f08d317394c44299faec66926629fb5682bd1974e8c2ab8ab727"
+    },
+    "37:4": {
+      "file": "examples/core/examples/p37_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "a6df14ead6c108d8486b2b9536cb56a044b5ff52d3d6f7ce02e071c098101d90"
+    },
+    "37:5": {
+      "file": "examples/core/examples/p37_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "5cbc72844fabb28891bcf21f09df353ac6ccdcbcd0987f9eefea80721452fa52"
+    },
+    "37:6": {
+      "file": "examples/core/examples/p37_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "f7f6103aec5b5b40e6468c200633f7d13ad3eab475a89a48c4e3393c9442742d"
+    },
+    "37:7": {
+      "file": "examples/core/examples/p37_007.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "fffa9cf7a3ad15478e2df07f3460547b407703cee18fe445b3e4cc1165306d41"
+    },
+    "37:8": {
+      "file": "examples/core/examples/p37_008.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "3c0df657d8ecb05ca6fecc17ead6e929226ea794e9c2eeecdee1d7b50c821340"
+    },
+    "37:10": {
+      "file": "examples/core/examples/p37_010.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "2847d98c8022806bae11d7606ddf18d0338be9bece4d7eb84002c2859377f16e"
+    },
+    "38:0": {
+      "file": "examples/core/examples/p38_000.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "a5b04e8675301098a316c58fff1a2f9d77465f3726a63e46ab3b0ffb21a70b38"
+    },
+    "38:1": {
+      "file": "examples/core/examples/p38_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "48b13ff99db38a3ac4e6bd78919ba6d971d6df64b98bcd397fceb0c79a82dd82"
+    },
+    "38:2": {
+      "file": "examples/core/examples/p38_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "cf5f509477b35644409c9f0327734b3eeb52343ce546ee87c6b34363e679040e"
+    },
+    "38:3": {
+      "file": "examples/core/examples/p38_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "1d4185bc592961617f64fb5d30e6b3a5e427f26120a25fb261ad97da0cc15eaa"
+    },
+    "38:4": {
+      "file": "examples/core/examples/p38_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "fdfb1ac05c2f51473ee645e2ebe3fcaedc0de0308ffc55f2279ae1b82233a99e"
+    },
+    "38:5": {
+      "file": "examples/core/examples/p38_005.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "024c2ba19fa0578aad43a7cb921960c728a54b464b501c8c66dfc83cccd2fdcb"
+    },
+    "38:6": {
+      "file": "examples/core/examples/p38_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "f444c1257c00dc269fc02af161b61efb47ab375a213430d6885f3b881909269c"
+    },
+    "40:0": {
+      "file": "examples/core/examples/p40_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "b90abf92d6dd71a3c33d96195a1472f1bb7dd548081f2aa3aea076f4d0dca16a"
+    },
+    "40:1": {
+      "file": "examples/core/examples/p40_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "66bc584f78c76ee86bcfa3f6385d7df9b4585fb3f1f3896ec809982f2e6a61be"
+    },
+    "40:2": {
+      "file": "examples/core/examples/p40_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "aa8e31ca0d179a793ae7e7daa306a9170ac5bfcdbef9cbdc2a66e9848e626a5b"
+    },
+    "40:3": {
+      "file": "examples/core/examples/p40_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "f2106f70ccb3b5d46ee806b249aa4cc12f7a2be6e976d0c21dd988038c3423b4"
+    },
+    "40:4": {
+      "file": "examples/core/examples/p40_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "eb5a9c82cb0ad39bdd288b944187a9c9bc2f721b3f8ccd6c03c8412208de2c5b"
+    },
+    "41:0": {
+      "file": "examples/core/examples/p41_000.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "d80b9fa1d35c1fcaa00e0fb841e31fc460b78fc9fb501d13a8946084760bf1bc"
+    },
+    "41:1": {
+      "file": "examples/core/examples/p41_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "4cb0ee3fba8a9ec3d3a984b04a9e0c74608d76b0fbf4bbcf3f274104a7ba2ad4"
+    },
+    "41:2": {
+      "file": "examples/core/examples/p41_002.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "31ee4a75cf2c77e47a527b0efbf01d7b956c518e3bf3a25209c88c5aac55c9be"
+    },
+    "41:3": {
+      "file": "examples/core/examples/p41_003.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "ac3aa2d1516a06cf92a00941281fefcf11e4a6cebc7056365bd005492a6b713f"
+    },
+    "41:4": {
+      "file": "examples/core/examples/p41_004.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "ae8b24ead8def38aaeb3257656c4e49ea3c30acddb790f9f8ed8dd079a43be4f"
+    },
+    "48:1": {
+      "file": "examples/core/examples/p48_001.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "2b4032d64d226fdc754c50b5e2fe71bc4a2c1a5e66fbb0b14ccca4d481a62a08"
+    },
+    "48:3": {
+      "file": "examples/core/examples/p48_003.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "626fd518f147dc7c8d2368fa8753205cfa044e949bafc27d7eecbc4cce653bad"
+    },
+    "50:1": {
+      "file": "examples/core/examples/p50_001.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "5aee58f88c41effb2fa290df5581045697035197331c228b10bfc43445b59f5d"
+    },
+    "50:6": {
+      "file": "examples/core/examples/p50_006.rs",
+      "kind": "contextual",
+      "status": "passed",
+      "sha256": "f07384922d6c5bad5f08410d1fad694c392ee563aaec17e912fa5366126e0368"
+    },
+    "16:5": {
+      "file": "examples/migration/examples/p16_5.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "c402c260c9c93b21d2957d5a5e184446040ed9f6b5fb1036124734b0e3ad5499"
+    },
+    "05:8": {
+      "file": "examples/migration/examples/p05_8.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "bbba0f938368e996b94c7e42e8ecb0a348041b6260af4d96d29f747d2ce8964d"
+    },
+    "22:3": {
+      "file": "examples/migration/examples/p22_3.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "7257f36d2d73eeb48e2096d3e9b99b739814be8a0d41d3eb63e32548442806e5"
+    },
+    "16:0": {
+      "file": "examples/migration/examples/p16_0.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "4d2ed5036e163663e3f6417db22bcf39b7295bab8110a9584f3873bb23ee8fb6"
+    },
+    "22:2": {
+      "file": "examples/migration/examples/p22_2.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "ee470585fbb924de4fdeb27731a115951934cc1bf4160c10069f730b10f528b5"
+    },
+    "16:4": {
+      "file": "examples/migration/examples/p16_4.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "67d2f237cfe493d7c8d4b2ce3a0c78047582db35b17d17a0c0a3fbe3eda4afa5"
+    },
+    "05:6": {
+      "file": "examples/migration/examples/p05_6.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "8bec66b88afe103af227ed6530ec7a2daaf14f37352607ae41979e0622a1e7b4"
+    },
+    "08:2": {
+      "file": "examples/migration/examples/p08_2.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "95800b1e7d6c9252a6cbf1122cc8da7c0e6c0cd5869b37921993fc39b9caad91"
+    },
+    "10:0": {
+      "file": "examples/migration/examples/p10_0.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "53c03c26b654ea163a4ef0cb3a471ed25e655f59c9e25cb7a0081d4a28f58d7d"
+    },
+    "27:5": {
+      "file": "examples/migration/examples/p27_5.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "45bdc828e6a73cec1f03dd1efbee1af133d1e10f4993984e40562d04b2b01a0f"
+    },
+    "27:6": {
+      "file": "examples/migration/examples/p27_6.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "8ddbaf8791d8ed71ec41dda45670bfd174afbb6f1df60fb428bb4ad4fee25d0a"
+    },
+    "27:7": {
+      "file": "examples/migration/examples/p27_7.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "27667e6e85307acc1fe22d7bb9d545e3d05191dd0dbe439581eb5d25545d24d4"
+    },
+    "16:8": {
+      "file": "examples/migration/examples/p16_8.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "23b574f4ff1f55bba5112d4b91f9a5f5f16518c1a6bd3b05d8ab8498cc4ace64"
+    },
+    "22:1": {
+      "file": "examples/migration/examples/p22_1.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "8e82a9752e510273574f7583459af85e774e8d573c4c1e010e7128e831a73dda"
+    },
+    "16:7": {
+      "file": "examples/migration/examples/p16_7.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "66dbdb6e119554b87697b9d81bd6da05091ec6a691f00c7f3b0444412ec11877"
+    },
+    "16:6": {
+      "file": "examples/migration/examples/p16_6.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "6b28784e6a3a61ff9f1e288ebe70f60f44db6c5ed5ec01322c01ec552eedb7e2"
+    },
+    "16:2": {
+      "file": "examples/migration/examples/p16_2.rs",
+      "kind": "standalone",
+      "status": "passed",
+      "sha256": "1d2d6fc2545a2c30f3c9f21d66278c255c4a090ca1ab5b3d4c7a81a92c3decf4"
+    },
+    "20:0": {
+      "file": "examples/guides/examples/otel_more.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "98b52f24b68519538e597e6e5ed84a6660e68b4404c191d989c81ba2920139e1"
+    },
+    "20:1": {
+      "file": "examples/guides/examples/otel_more.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "98b52f24b68519538e597e6e5ed84a6660e68b4404c191d989c81ba2920139e1"
+    },
+    "20:2": {
+      "file": "examples/guides/examples/otel_more.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "98b52f24b68519538e597e6e5ed84a6660e68b4404c191d989c81ba2920139e1"
+    },
+    "20:9": {
+      "file": "examples/guides/examples/otel_more.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "98b52f24b68519538e597e6e5ed84a6660e68b4404c191d989c81ba2920139e1"
+    },
+    "20:10": {
+      "file": "examples/guides/examples/otel_more.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "98b52f24b68519538e597e6e5ed84a6660e68b4404c191d989c81ba2920139e1"
+    },
+    "20:11": {
+      "file": "examples/guides/examples/otel_more.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "98b52f24b68519538e597e6e5ed84a6660e68b4404c191d989c81ba2920139e1"
+    },
+    "20:3": {
+      "file": "examples/guides/examples/otel.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "3d7b231b7f4dc77b38f853977639a3493fcf52a235b2913908210d477c4e2bd3"
+    },
+    "20:5": {
+      "file": "examples/guides/examples/otel.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "3d7b231b7f4dc77b38f853977639a3493fcf52a235b2913908210d477c4e2bd3"
+    },
+    "29:4": {
+      "file": "examples/guides/examples/discord/rig_agent.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "6f83809c6ea0b39652c8b40958dc473c625e0913fd76af4bdf52c7f1b17791b0"
+    },
+    "29:5": {
+      "file": "examples/guides/examples/discord/main.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8a80bdd024374a129cc283a936983a9129f55848d70409b88fdd30db21496fed"
+    },
+    "29:6": {
+      "file": "examples/guides/examples/discord/main.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8a80bdd024374a129cc283a936983a9129f55848d70409b88fdd30db21496fed"
+    },
+    "29:8": {
+      "file": "examples/guides/examples/discord/main.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8a80bdd024374a129cc283a936983a9129f55848d70409b88fdd30db21496fed"
+    },
+    "30:2": {
+      "file": "examples/guides/examples/flight/flight_search_tool.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "0102d66bf06be47b1a5e3af9221e007fdb0a37bb0b5ee6adfc6b2c02d5817fe9"
+    },
+    "30:3": {
+      "file": "examples/guides/examples/flight/main.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "9e93af8e52374314846c821702b0c72f473d7c7b3324fc2fd6a241cd46f669b5"
+    },
+    "32:0": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:1": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:4": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:5": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:6": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:7": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:8": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:9": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:10": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:11": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "32:12": {
+      "file": "examples/guides/examples/custom_provider.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "8ecd3c8df91b8345d1212c5dadcfd9da43d04138359add9b61119d106eceb1d9"
+    },
+    "33:2": {
+      "file": "examples/guides/examples/lambda.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "fd38b04eec5d0ad828d64069e1c610c060a53ecc2058e623649a374515d4feb9"
+    },
+    "33:3": {
+      "file": "examples/guides/examples/lambda.rs",
+      "kind": "compiled-contextual-fragment",
+      "status": "passed",
+      "sha256": "fd38b04eec5d0ad828d64069e1c610c060a53ecc2058e623649a374515d4feb9"
+    },
+    "34:1": {
+      "file": "examples/integrations-lance/examples/p34_001.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "b78cf1e54c168c55830367285ef623e8dd197fefe9bd858823eae52c1698e3be"
+    },
+    "34:2": {
+      "file": "examples/integrations-lance/examples/p34_002.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "1a8351f4f27d0fc4bee549fca4e2c1d6aa8bf19572c307e7c80d2729993b230e"
+    },
+    "34:4": {
+      "file": "examples/integrations-lance/examples/p34_004.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "454b61512b9c3cca64198152aec5fcdefd2af58a60bb50b45ace732dffeea8e3"
+    },
+    "34:5": {
+      "file": "examples/integrations-lance/examples/p34_005.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "9e68ea6d4c2945c0937f6210952afc8182b11ff9d024f1e76c18b8eb69b9a070"
+    },
+    "39:0": {
+      "file": "examples/integrations-check/examples/p39_000.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "f210515be316ac6ab370be9d58f1d277fc3ef563526194c0559854e69fbb2adc"
+    },
+    "39:1": {
+      "file": "examples/integrations-check/examples/p39_001.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "fe6ee2f28ff12079763bee9a136113f164269ed4368d2c27bea3d1f83139fab6"
+    },
+    "39:2": {
+      "file": "examples/integrations-check/examples/p39_002.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "f1576fbc33e9205370412a4100893b6b06551a7a656d36ae65f3c6af8c7c347a"
+    },
+    "39:3": {
+      "file": "examples/integrations-check/examples/p39_003.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "4152b8466fd4ca71b19ef0b76dbc1e2dab19ed39f5d2c3679250b2037361dafb"
+    },
+    "39:4": {
+      "file": "examples/integrations-check/examples/p39_004.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "944d4ae7dca76a478cd0523f67df0ffde6968f921e193d636543a451b6a410b3"
+    },
+    "39:6": {
+      "file": "examples/integrations-local/examples/p39_006.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "e83425cfc52a3a315c862fb5035d38b4618a5c4627d352a383b2f991eff3595a"
+    },
+    "39:8": {
+      "file": "examples/integrations-local/examples/p39_008.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "de18c1329f2231ed6643b5e4a23f8bafcccde12ede671fb575bc3ffeb4196320"
+    },
+    "42:1": {
+      "file": "examples/integrations-lance/examples/p42_001.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "7c4d98656f9a472d37c6830de901b7b31336c048e9c09de872176d0bf632ceb3"
+    },
+    "42:2": {
+      "file": "examples/integrations-lance/examples/p42.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "74f7db66fd99fd41f92fe2b990dd9146b32cef4479ba2627b160865099fbba87"
+    },
+    "42:3": {
+      "file": "examples/integrations-lance/examples/p42.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "74f7db66fd99fd41f92fe2b990dd9146b32cef4479ba2627b160865099fbba87"
+    },
+    "42:4": {
+      "file": "examples/integrations-lance/examples/p42.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "74f7db66fd99fd41f92fe2b990dd9146b32cef4479ba2627b160865099fbba87"
+    },
+    "42:5": {
+      "file": "examples/integrations-lance/examples/p42.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "74f7db66fd99fd41f92fe2b990dd9146b32cef4479ba2627b160865099fbba87"
+    },
+    "42:6": {
+      "file": "examples/integrations-lance/examples/p42.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "74f7db66fd99fd41f92fe2b990dd9146b32cef4479ba2627b160865099fbba87"
+    },
+    "42:7": {
+      "file": "examples/integrations-lance/examples/p42.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "74f7db66fd99fd41f92fe2b990dd9146b32cef4479ba2627b160865099fbba87"
+    },
+    "43:2": {
+      "file": "examples/integrations-check/examples/p43_002.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "9e0fd4ad4ee3beb16e651348d818ef33f40c4a8f84eaf36309cf7b3d9ec27922"
+    },
+    "43:3": {
+      "file": "examples/integrations-check/examples/p43_003.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "7d67258f663a950cbf77b35d9105144e19a3863d8755e3d00f85ab65a4af5338"
+    },
+    "44:1": {
+      "file": "examples/integrations-check/examples/p44_001.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "b0653e80468eecfa8d7550e71df3da89ff62be4b5b15d7ba65f8643172d25147"
+    },
+    "45:2": {
+      "file": "examples/integrations-check/examples/p45_002.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "92f1428e7b61b1273ca12ce7e37ecc99db236bb38fbadf99493c1d194dbd4d81"
+    },
+    "45:3": {
+      "file": "examples/integrations-check/examples/p45_003.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "3edf41ee6f3adcb9dc2b9aa5074950a50c8acf05be4bdf4bf77f46a81dd287d2"
+    },
+    "46:1": {
+      "file": "examples/integrations-surreal/examples/p46_001.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "e7bd328b8bfded74f8051dae80d66ca061b579d68d84de61fda6d45c860aad56"
+    },
+    "46:2": {
+      "file": "examples/integrations-surreal/examples/p46_002.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "9332b120a395b5b7012978182c87fbdc4dc383c01333a80b8c8082b87c82940f"
+    },
+    "46:3": {
+      "file": "examples/integrations-surreal/examples/p46_003.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "6a7f2696ac086924ee50c5a8b7c3f3d35ade60d210f0c4eb3d0899852da4c8f8"
+    },
+    "47:1": {
+      "file": "examples/integrations-check/examples/p47_001.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "49099b4da8490e87a380f3f3daaceb894f4504132393be3ee07a49593cedc882"
+    },
+    "47:2": {
+      "file": "examples/integrations-check/examples/p47_001.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "49099b4da8490e87a380f3f3daaceb894f4504132393be3ee07a49593cedc882"
+    },
+    "47:3": {
+      "file": "examples/integrations-check/examples/p47_003.rs",
+      "kind": "compile-context",
+      "status": "passed",
+      "sha256": "eb4c2418dffe647988f998607843fc0b44e7d802d1a1191c6efb666ec396053f"
+    },
+    "47:5": {
+      "file": "examples/integrations-check/examples/p47_005.rs",
+      "kind": "full",
+      "status": "passed",
+      "sha256": "7843d79d61c7bd3d569b550e5d20c17c84ccb4b5476ddc954b8550839b8be4f1"
+    }
+  },
+  "scope": "Cargo type checking uses the exact displayed snippets, with imports/setup where required. Live external services are not tested."
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::ollama::{self, Ollama};\n\n\nlet client = Ollama::new();\n\n\nlet agent = AgentBuilder::new(client.completion(ollama::QWEN3))\n    .preamble(\"You are a concise assistant.\")\n    .build();\n\n\nprintln!(\"{}\", agent.prompt(\"What is Rust's borrow checker?\").await?.output());"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::ollama::extension::{KeepAlive, OllamaOptions};\nuse rig::providers::ollama::{self, Ollama};\n\n\nlet options = OllamaOptions::default()\n    .num_ctx(16_384)\n    .keep_alive(KeepAlive::duration(\"10m\"));\n\n\nlet agent = AgentBuilder::new(Ollama::new().native_completion(ollama::QWEN3))\n    .provider_option(options)\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::ollama::{self, Ollama};\n\n\nlet embedder = Ollama::new().embedding(ollama::NOMIC_EMBED_TEXT, None);"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::prelude::*;\nuse rig::providers::llamacpp;\n\n\nlet client = llamacpp::new(\"\");\nlet agent = AgentBuilder::new(client.chat(llamacpp::LLAMA_CPP))\n    .preamble(\"You are a concise assistant.\")\n    .build();"
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::providers::openai::{OpenAIConfig, wire::LLAMACPP};\n\n\nlet client = OpenAIConfig::with_key(&LLAMACPP, \"\")\n    .with_base_url(\"http://gpu-box:8080/v1\")\n    .client();"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"=0.46.0\", features = [\"candle\"] }\ntokio = { version = \"1\", features = [\"macros\", \"rt-multi-thread\"] }\nanyhow = \"1\""
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::candle::{CandleModel, ModelData};\nuse rig::prelude::*;\n\n\nlet model = CandleModel::from_safetensors_async(ModelData {\n    config: std::fs::read(\"./model/config.json\")?,\n    tokenizer: std::fs::read(\"./model/tokenizer.json\")?,\n    weights: std::fs::read(\"./model/model.safetensors\")?,\n})\n.await?;\n\n\nlet agent = AgentBuilder::new(model.completion())\n    .preamble(\"You are a concise assistant.\")\n    .build();\nprintln!(\"{}\", agent.prompt(\"Explain ownership briefly.\").await?.output());"
+  },
+  {
+    "lang": "toml",
+    "text": "[dependencies]\nrig = { version = \"=0.46.0\", features = [\"fastembed\"] }\ntokio = { version = \"1\", features = [\"macros\", \"rt-multi-thread\"] }\nanyhow = \"1\""
+  },
+  {
+    "lang": "rust",
+    "text": "use rig::fastembed::{Fastembed, FastembedModel};\nuse rig::prelude::*;\n\n\nlet model_id = FastembedModel::AllMiniLML6V2Q;\nlet embedder = Fastembed::load(&model_id)?.embedding(&model_id, None)?;\n\n\n// Use it like any embedding model: EmbeddingsBuilder, vector stores, ...\nlet index = InMemoryVectorStore::<String>::default().index(embedder);"
+  }
+]
