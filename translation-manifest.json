@@ -88,7 +88,7 @@
     "code_blocks": 8,
     "fetched_on": "2026-11-10",
     "file": "06.html",
-    "zh": "补全"
+    "zh": "模型生成（Completion）"
   },
   {
     "id": "07",
@@ -101,7 +101,7 @@
     "code_blocks": 13,
     "fetched_on": "2026-11-10",
     "file": "07.html",
-    "zh": "智能体 Agents"
+    "zh": "智能体（Agent）"
   },
   {
     "id": "08",
@@ -127,7 +127,7 @@
     "code_blocks": 7,
     "fetched_on": "2026-11-10",
     "file": "09.html",
-    "zh": "钩子 Hooks"
+    "zh": "钩子（Hooks）"
   },
   {
     "id": "10",
@@ -153,7 +153,7 @@
     "code_blocks": 14,
     "fetched_on": "2026-11-10",
     "file": "11.html",
-    "zh": "工具 Tools"
+    "zh": "工具（Tools）"
   },
   {
     "id": "12",
@@ -192,7 +192,7 @@
     "code_blocks": 8,
     "fetched_on": "2026-11-10",
     "file": "14.html",
-    "zh": "嵌入 Embeddings"
+    "zh": "向量嵌入（Embeddings）"
   },
   {
     "id": "15",
@@ -218,7 +218,7 @@
     "code_blocks": 9,
     "fetched_on": "2026-11-10",
     "file": "16.html",
-    "zh": "记忆 Memory"
+    "zh": "记忆（Memory）"
   },
   {
     "id": "17",
@@ -296,7 +296,7 @@
     "code_blocks": 4,
     "fetched_on": "2026-11-10",
     "file": "22.html",
-    "zh": "录制与回放"
+    "zh": "调用记录与重放"
   },
   {
     "id": "23",

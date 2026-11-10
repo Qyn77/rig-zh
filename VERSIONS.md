@@ -10,16 +10,22 @@
 - HTTP 后端：配置的 `connect(http)` 替代移除的客户端 `with_http`。
 - 记忆：`MemoryStore`、`Store` / `AsyncStore`；显式窗口和摘要流程；保存失败通过 `PromptError::Memory` 返回并保留已完成响应。
 - 持久化运行：`ModelTurn::from_response`、待处理调用的 `answer`、`run.answer` / `answer_all`、`Aside`。
-- 录制回放：`Handlers` / `over_handlers`；修正记忆 I/O 不属于录制 effect 的说明。
+- 调用记录与重放：`Handlers` / `over_handlers`；修正记忆 I/O 不属于录制 effect 的说明。
 - MCP：rmcp **3.5.0**，`McpConnection`、`ClientConfig` / `ServerConfig` 和连接关闭流程。
 - 自定义 provider：`Wire::Event`、类型化事件重组、`Arc<Message>`、`cache_key`；保留未知服务商字段。
 - 图像常量、RAG 文档反序列化、缺失依赖、航班模块声明、Lambda runtime、LanceDB 索引和 AWS 配置等同步修正。
+
+## 中文表述修订（2026-11-10）
+
+本次扫描全部 52 篇正文的术语和易误解表述，重点核对调用重放、模型生成、钩子、工具、记忆与测试章节。将“录制与回放”改为“调用记录与重放”，解释“补全”“统一入口 crate”等术语，修正 Opaque 历史内容再次发送与离线重放的混淆，以及旧版记忆分派事件说明。明确离线测试的前提、模型调用轮数与工具数量的区别，并标注部署性能数字来自原文历史测试。
+
+本次没有修改 Rust 示例代码或依赖版本。编译验证与译文审校分别进行；这轮重点审校不等于所有技术事实都已经过真实服务验证，也不代表获得官方审定。后续自动翻译使用仓库中的 [中文翻译规则](https://github.com/Qyn77/rig-zh/blob/main/TRANSLATION.md)。
 
 ## 实际验证范围
 
 - 编译：230 / 230 Rust 代码块，7 个锁定依赖的 Cargo 项目；每个块下方可打开完整上下文。
 - 离线单元测试：核心 5 / 5、航班格式化 1 / 1 通过。
-- 实际离线运行：记忆、窗口与摘要、错误保留、录制回放、审批允许/拒绝、目录和模型构造、自定义 provider 解码、MCP 客户端到服务端工具调用均通过。MCP 的 `2 + 5 = 7` 是实际进程内传输调用。
+- 实际离线运行：记忆、窗口与摘要、错误保留、调用记录与重放、审批允许/拒绝、目录和模型构造、自定义 provider 解码、MCP 客户端到服务端工具调用均通过。MCP 的 `2 + 5 = 7` 是实际进程内传输调用。
 - 未进行真实模型、Discord、RapidAPI、数据库服务、AWS 或遥测平台端到端调用；没有使用真实 API Key，也没有下载或运行本地模型权重。编译通过不能证明账户权限、服务可用性、网络及部署配置正确。
 
 ## 下载与运行
@@ -54,12 +60,12 @@ cargo run --locked --manifest-path examples/core/Cargo.toml --example p02_003
 | [服务商与客户端](05.html) | 5, 7, 9 |
 | [AgentRunner](08.html) | 3 |
 | [持久化运行](10.html) | 1 |
-| [嵌入 Embeddings](14.html) | 8 |
-| [记忆 Memory](16.html) | 1, 3, 4, 5, 6, 7, 8, 9 |
+| [向量嵌入（Embeddings）](14.html) | 8 |
+| [记忆（Memory）](16.html) | 1, 3, 4, 5, 6, 7, 8, 9 |
 | [媒体功能：图片、音频与转写](19.html) | 1 |
 | [可观测性](20.html) | 5 |
 | [测试](21.html) | 1 |
-| [录制与回放](22.html) | 1, 2, 3, 4 |
+| [调用记录与重放](22.html) | 1, 2, 3, 4 |
 | [构建 RAG 系统](25.html) | 2, 4 |
 | [文本提取与分类](26.html) | 2 |
 | [模型路由](27.html) | 6, 7, 8 |

@@ -6,7 +6,7 @@
 
 初始 0.46.0 适配覆盖 52 页、319 个代码块，实际更新 **67 个代码块**；当时 **230 个 Rust 代码块全部通过编译检查**。片段附完整编译上下文，所有项目精确锁定对应 Rig 版本并附 Cargo.lock。
 
-核心 5 个测试、航班 1 个测试，以及记忆、回放、审批、MCP、自定义 provider 等离线程序实际运行通过。**真实模型、外部数据库、云部署与本地模型权重未运行**，需要你自己的凭证、服务或模型文件。
+核心 5 个测试、航班 1 个测试，以及记忆、重放、审批、MCP、自定义 provider 等离线程序实际运行通过。**真实模型、外部数据库、云部署与本地模型权重未运行**，需要你自己的凭证、服务或模型文件。
 
 详细改动、测试范围和逐页清单：[升级与验证](https://qyn77.github.io/rig-zh/versions.html)。初始快照中原站 17 张图片失效，仍保留缺失说明。
 
@@ -105,3 +105,7 @@ python3 scripts/verify.py
 Google Search Console 需要单独操作：添加网址前缀 `https://qyn77.github.io/rig-zh/`，选择 HTML 标记，把 content 值填入 `site.json` 的 `google_site_verification`。发布后在 Search Console 点击验证，提交 `sitemap.xml`。Bing Webmaster Tools 的验证值可填入 `bing_site_verification`。这些是公开站点验证码，不是账号密码。IndexNow 不替代 Google Search Console。
 
 规则依据：[Google 站点地图](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)、[robots.txt 位置规则](https://developers.google.com/crawling/docs/robots-txt/create-robots-txt)、[IndexNow 协议](https://www.indexnow.org/documentation)。
+
+## 中文译文维护
+
+[翻译规则](TRANSLATION.md)约定术语、简洁表达及技术说明边界；自动翻译、API 迁移和独立审校都会读取同一份规则。2026-11-10 的修订扫描了全部 52 篇正文，重点复核了调用重放、模型生成、钩子、工具、记忆与测试等章节，并统一目录和交叉链接。具体范围与源码依据见 [审校记录](TRANSLATION-REVIEW.md)。编译通过不等于翻译准确，自动审校也不能代替专家或官方审核。
