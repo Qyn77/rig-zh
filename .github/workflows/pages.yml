@@ -17,6 +17,8 @@ concurrency:
 jobs:
   validate:
     uses: ./.github/workflows/validate.yml
+    secrets:
+      INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
 
   deploy:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
@@ -42,3 +44,9 @@ jobs:
       - name: Deploy only the fully verified site
         id: deployment
         uses: actions/deploy-pages@v4
+
+  notify-search:
+    needs: deploy
+    uses: ./.github/workflows/notify-search.yml
+    secrets:
+      INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}

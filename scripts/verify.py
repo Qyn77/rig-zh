@@ -58,3 +58,6 @@ for p in (R/'content/codes').glob('*.json'):
    parsed=tomllib.loads(code['text'])
    dep=parsed.get('dependencies',{}).get('rig')
    if dep is not None:assert (dep if isinstance(dep,str) else dep['version'])=='='+validation['rig_version'],(p,'displayed Cargo pin')
+
+from seo import load_config, verify_site
+verify_site(D,manifest,load_config())

@@ -19,6 +19,7 @@
 ## 5. 可复用组件
 - Header：品牌文字、非官方标记、搜索触发、主题开关、移动目录按钮；按钮均有 hover/active/focus-visible，44px触摸目标。
 - Sidebar：按官方目录分组，details/summary 折叠，当前链接 aria-current=page；桌面独立滚动。
+- Breadcrumb：沿用 eyebrow 样式，显示首页与当前文章，使用 nav/aria-current 并与结构化数据一致。
 - Prose：共用标题/列表/表格/引用/链接/代码规则，不逐页写样式。
 - CodeBlock：语言标签、复制按钮、横向滚动 pre；复制成功/失败均通过 aria-live 提示，可键盘选择。
 - Notice：译注与版本差异，清楚标明不是原文；升级后展示 0.46.0 代码；保留 source 原文快照，在 Notice 链接到逐块编译与运行记录。

@@ -80,6 +80,8 @@ jobs:
   validate:
     needs: prepare
     uses: ./.github/workflows/validate.yml
+    secrets:
+      INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
     with:
       candidate: true
 
@@ -139,3 +141,9 @@ jobs:
           test "$REMOTE_SHA" = "$EXPECTED_SHA"
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  notify-search:
+    needs: deploy
+    uses: ./.github/workflows/notify-search.yml
+    secrets:
+      INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}

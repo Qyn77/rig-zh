@@ -93,3 +93,15 @@ python3 scripts/verify.py
 添加或更换密钥后，可运行 [Accept DeepSeek credentials and migration](https://github.com/Qyn77/rig-zh/actions/workflows/acceptance.yml)。该手动工作流真实调用 DeepSeek，翻译短文、迁移旧版 ProviderRef/会话记忆 API，并执行工具读写回合；随后在无模型密钥的独立任务中编译并离线运行生成的 Rust 程序。报告、译文和生成代码保留为 Actions 产物，不覆盖线上正文。
 
 这项验收最多发起 8 次模型请求、累计 6 万 token 阈值，会产生少量 API 用量。它验证实际凭证和代表性流程，不能替代未来新版本的全量迁移与 7 项编译门禁。
+
+## SEO 与搜索引擎通知
+
+全部正文页面自动生成独立标题、中文摘要、canonical 规范网址、Open Graph/Twitter 摘要以及 WebSite、WebPage、TechArticle 和面包屑结构化数据。摘要取自当前译文，新增章节自动进入 [站点地图](https://qyn77.github.io/rig-zh/sitemap.xml)。构建检查会拦截重复网址、缺失页面和元数据错误；样式展示页设置 noindex。
+
+`site.json` 管理站点域名和公开验证标记。迁移域名时修改 `base_url`，并在搜索平台重新验证。当前站点位于 `/rig-zh/` 子目录，robots.txt 只在域名根目录生效，因此不生成无效的子目录 robots.txt；页面通过 robots 元标签允许抓取。
+
+仓库 Actions Secret **INDEXNOW_KEY** 用于 IndexNow 所有权证明。构建时生成公开验证文件；普通发布与 Rig 自动升级发布完成后，`notify-search.yml` 核对线上站点地图和验证文件，再向 IndexNow 提交所有规范网址。HTTP 200/202 表示请求接收（202 尚待验证），不代表已经收录或保证排名。失败会在 Actions 显示，可手动重跑 [搜索通知](https://github.com/Qyn77/rig-zh/actions/workflows/notify-search.yml)；已部署的网站不会因此回滚。
+
+Google Search Console 需要单独操作：添加网址前缀 `https://qyn77.github.io/rig-zh/`，选择 HTML 标记，把 content 值填入 `site.json` 的 `google_site_verification`。发布后在 Search Console 点击验证，提交 `sitemap.xml`。Bing Webmaster Tools 的验证值可填入 `bing_site_verification`。这些是公开站点验证码，不是账号密码。IndexNow 不替代 Google Search Console。
+
+规则依据：[Google 站点地图](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)、[robots.txt 位置规则](https://developers.google.com/crawling/docs/robots-txt/create-robots-txt)、[IndexNow 协议](https://www.indexnow.org/documentation)。
