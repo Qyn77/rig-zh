@@ -87,3 +87,9 @@ python3 scripts/verify.py
 实现：`.github/workflows/update.yml`（检测与迁移）、`validate.yml`（全量验证）、`pages.yml`（普通提交发布）。迁移候选与编译日志保存在对应 Actions 产物中；首次配置后建议手动运行一次检查。
 
 协议参考：[DeepSeek 官方 API](https://api-docs.deepseek.com/) · [工具调用](https://api-docs.deepseek.com/guides/tool_calls/) · [GitHub 定时触发说明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)。
+
+### 配置后验收
+
+添加或更换密钥后，可运行 [Accept DeepSeek credentials and migration](https://github.com/Qyn77/rig-zh/actions/workflows/acceptance.yml)。该手动工作流真实调用 DeepSeek，翻译短文、迁移旧版 ProviderRef/会话记忆 API，并执行工具读写回合；随后在无模型密钥的独立任务中编译并离线运行生成的 Rust 程序。报告、译文和生成代码保留为 Actions 产物，不覆盖线上正文。
+
+这项验收最多发起 8 次模型请求、累计 6 万 token 阈值，会产生少量 API 用量。它验证实际凭证和代表性流程，不能替代未来新版本的全量迁移与 7 项编译门禁。

@@ -1,0 +1,78 @@
+name: Accept DeepSeek credentials and migration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deepseek-acceptance
+  cancel-in-progress: false
+
+jobs:
+  live-model:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - name: Real DeepSeek translation, API migration and tool round trip
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL || 'deepseek-v4-pro' }}
+          SYNC_MAX_CALLS: '8'
+          SYNC_MAX_TOKENS: '60000'
+        run: python scripts/accept_deepseek.py prepare
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deepseek-generated-sample
+          path: .acceptance/
+          include-hidden-files: true
+          retention-days: 14
+
+  compile-generated-code:
+    needs: live-model
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_INCREMENTAL: '0'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: python -m pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: deepseek-generated-sample
+          path: .acceptance
+      - name: Install pinned Rust
+        run: rustup show
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-${{ runner.os }}-migration-${{ hashFiles('examples/**/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-migration-
+      - name: Compile and execute the exact generated example without model credentials
+        run: python scripts/accept_deepseek.py compile
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deepseek-acceptance-results
+          path: .acceptance/
+          include-hidden-files: true
+          retention-days: 14

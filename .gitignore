@@ -16,3 +16,4 @@ __pycache__/
 /release-candidate.json
 /candidate.zip
 /validated.zip
+/.acceptance/
