@@ -1,0 +1,141 @@
+name: Check and sync upstream Rig
+
+on:
+  schedule:
+    - cron: '23 1 * * *' # Daily around 09:23 Asia/Shanghai; GitHub may delay scheduled jobs.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rig-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      update: ${{ steps.release.outputs.update }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - id: release
+        run: python scripts/detect_release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upstream-release
+          path: release-candidate.json
+
+  prepare:
+    needs: detect
+    if: needs.detect.outputs.update == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - uses: actions/download-artifact@v4
+        with:
+          name: upstream-release
+      - name: Require DeepSeek credential only when an update is needed
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          if [ -z "$DEEPSEEK_API_KEY" ]; then
+            echo '::error::Add repository Actions secret DEEPSEEK_API_KEY. The existing site is unchanged.'
+            exit 1
+          fi
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler libssl-dev pkg-config clang cmake
+          python -m pip install -r requirements.txt
+      - name: Translate and migrate with bounded DeepSeek tools
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL || 'deepseek-v4-pro' }}
+        run: python scripts/sync_deepseek.py
+      - run: python scripts/candidate.py pack candidate.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-source
+          path: candidate.zip
+          retention-days: 14
+
+  validate:
+    needs: prepare
+    uses: ./.github/workflows/validate.yml
+    with:
+      candidate: true
+
+  commit:
+    needs: [detect, validate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: validated-source
+          path: /tmp/validated
+      - run: python scripts/candidate.py restore /tmp/validated/validated.zip
+      - name: Commit only the checked candidate; refuse a concurrent main change
+        id: commit
+        env:
+          RIG_VERSION: ${{ needs.detect.outputs.version }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add content source examples validation.json translation-manifest.json verification.json VERSIONS.md QA.md README.md code-changes.diff update-report.json rust-toolchain.toml
+          git commit -m "Sync Chinese documentation and examples to Rig $RIG_VERSION"
+          git push origin HEAD:main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: commit
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages-production
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Refuse a stale publication
+        env:
+          EXPECTED_SHA: ${{ needs.commit.outputs.sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          REMOTE_SHA=$(git ls-remote "https://github.com/$REPOSITORY.git" refs/heads/main | cut -f1)
+          test "$REMOTE_SHA" = "$EXPECTED_SHA"
+      - id: deployment
+        uses: actions/deploy-pages@v4

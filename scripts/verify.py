@@ -2,6 +2,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse,unquote
 import json,re,collections,hashlib
+from automation import validate_mapping
 R=Path(__file__).resolve().parents[1]; D=R/'dist';manifest=json.loads((R/'translation-manifest.json').read_text())
 validation=json.loads((R/'validation.json').read_text())
 issues=[];counts=collections.Counter();trees={}
@@ -36,9 +37,10 @@ for file,soup in trees.items():
  for e in soup.select('script[src],link[href],img[src]'):
   url=e.get('src') or e.get('href');u=urlparse(url)
   if not u.scheme and not u.netloc:assert (D/u.path).exists(),(file,url)
-assert counts['code_blocks']==319
-assert len(validation['blocks'])==230
-counts['compiled_rust_blocks']=230
+validate_mapping()
+assert counts['pages']==len(manifest)
+assert counts['code_blocks']==sum(p['code_blocks'] for p in manifest)
+counts['compiled_rust_blocks']=len(validation['blocks'])
 report={'counts':dict(counts),'local_link_issues':issues}
 (R/'verification.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
 print(json.dumps(report,ensure_ascii=False,indent=2))
@@ -47,9 +49,12 @@ if issues:raise SystemExit(1)
 import tomllib
 for p in (R/'examples').glob('*/Cargo.toml'):
  dep=tomllib.loads(p.read_text())['dependencies']['rig']
- assert (dep if isinstance(dep,str) else dep['version'])=='=0.46.0',p
+ assert (dep if isinstance(dep,str) else dep['version'])=='='+validation['rig_version'],p
  lock=tomllib.loads(p.with_name('Cargo.lock').read_text())
- assert next(x['version'] for x in lock['package'] if x['name']=='rig')=='0.46.0',p
+ assert next(x['version'] for x in lock['package'] if x['name']=='rig')==validation['rig_version'],p
 for p in (R/'content/codes').glob('*.json'):
  for code in json.loads(p.read_text()):
-  if code['lang']=='toml':tomllib.loads(code['text'])
+  if code['lang']=='toml':
+   parsed=tomllib.loads(code['text'])
+   dep=parsed.get('dependencies',{}).get('rig')
+   if dep is not None:assert (dep if isinstance(dep,str) else dep['version'])=='='+validation['rig_version'],(p,'displayed Cargo pin')

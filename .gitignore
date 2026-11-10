@@ -10,3 +10,9 @@ __pycache__/
 /升级前备份-*.zip
 /upgrade-preview.png
 .DS_Store
+
+# Transient update candidates and per-run CI proof.
+/.ci-results/
+/release-candidate.json
+/candidate.zip
+/validated.zip

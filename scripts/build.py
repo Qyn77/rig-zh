@@ -10,6 +10,9 @@ from pygments.formatters import HtmlFormatter
 R=Path(__file__).resolve().parents[1]; D=R/'dist'; S=R/'source'; C=R/'content'
 manifest=json.loads((S/'manifest.json').read_text())
 validation=json.loads((R/'validation.json').read_text()) if (R/'validation.json').exists() else {}
+VERSION=validation['rig_version']
+RUST_VERSION=validation['rustc']
+SNAPSHOT=max(p['fetched_on'] for p in manifest)
 images=json.loads((S/'images.json').read_text()) if (S/'images.json').exists() else {}
 for p in manifest:
  p['file']='index.html' if p['id']=='00' else p['id']+'.html'
@@ -40,14 +43,14 @@ def sidebar(current):
    out.append(f'<a href="{p["file"]}"{attr}>{E(p["zh"])}</a>')
   if subgroup:out.append('</details>')
   out.append('</details>')
- out.append('<div class="side-foot">52 篇中文文档 · 官网快照<br>2026-11-10<a href="versions.html">0.46.0 升级与验证</a><a href="https://docs.rs/rig/0.46.0/rig/">0.46.0 API 参考 ↗</a></div>')
+ out.append(f'<div class="side-foot">{len(manifest)} 篇中文文档 · 官网快照<br>{SNAPSHOT}<a href="versions.html">{VERSION} 升级与验证</a><a href="https://docs.rs/rig/{VERSION}/rig/">{VERSION} API 参考 ↗</a></div>')
  return ''.join(out)
 
 def shell(title,body,current='',toc='',meta='',notice='',pager=''):
  return f'''<!doctype html>
-<html lang="zh-CN" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{E(title)} · Rig 中文文档</title><meta name="description" content="{E(title)}：Rig 官方文档的非官方中文译本，保留官网目录与来源，示例实际适配 Rig 0.46.0，附完整编译上下文与运行记录。"><meta name="color-scheme" content="light dark"><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><script>try{{document.documentElement.dataset.theme=localStorage.getItem('rig-zh-theme')||'light'}}catch{{}}</script><link rel="stylesheet" href="assets/style.css"><script src="assets/app.js" defer></script></head>
+<html lang="zh-CN" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{E(title)} · Rig 中文文档</title><meta name="description" content="{E(title)}：Rig 官方文档的非官方中文译本，保留官网目录与来源，示例实际适配 Rig {VERSION}，附完整编译上下文与运行记录。"><meta name="color-scheme" content="light dark"><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><script>try{{document.documentElement.dataset.theme=localStorage.getItem('rig-zh-theme')||'light'}}catch{{}}</script><link rel="stylesheet" href="assets/style.css"><script src="assets/app.js" defer></script></head>
 <body><a class="skip" href="#main">跳到正文</a><header class="topbar"><div class="top-inner"><a class="brand" href="index.html">RIG<span>中文文档</span></a><span class="unofficial">非官方中文译本</span><div class="header-links"><a href="versions.html">版本说明</a><a href="https://www.rig.rs/docs">英文官网 ↗</a><button class="button search-trigger" id="search-open" aria-label="搜索文档" aria-haspopup="dialog">{searchsvg}<span class="search-label">搜索文档</span><kbd>⌘ K</kbd></button><button class="button icon-button" id="theme" aria-label="切换为深色">{themesvg}</button><button class="button icon-button mobile-toggle" id="menu" aria-label="打开章节目录" aria-expanded="false" aria-controls="sidebar">{menusvg}</button></div></div></header>
-<div class="layout"><nav class="sidebar" id="sidebar" aria-label="章节目录">{sidebar(current)}</nav><main id="main" tabindex="-1"><div class="eyebrow"><a href="index.html">文档</a><span>/</span><span>中文译本</span></div><h1>{E(title)}</h1>{meta}{notice}<article class="prose">{body}</article>{pager}<footer class="footer">本文译自 Rig 官方英文文档，中文翻译未经官方审核。代码已按 Rig 0.46.0 更新；英文快照保存在 source，验证范围见版本说明。<br>原文版权归 Playgrounds / Rig 作者所有 · <a href="LICENSE.txt">MIT 许可</a> · <a href="versions.html">升级与验证记录</a></footer></main><aside class="rail" aria-label="本页目录"><h2 class="rail-title">本页目录</h2><nav>{toc or '<a href="#main">概览</a>'}</nav><div class="rail-footer">阅读提示<br>API 名称保留英文，便于查阅和复制。<a href="versions.html">查看编译与运行记录 →</a></div></aside></div>
+<div class="layout"><nav class="sidebar" id="sidebar" aria-label="章节目录">{sidebar(current)}</nav><main id="main" tabindex="-1"><div class="eyebrow"><a href="index.html">文档</a><span>/</span><span>中文译本</span></div><h1>{E(title)}</h1>{meta}{notice}<article class="prose">{body}</article>{pager}<footer class="footer">本文译自 Rig 官方英文文档，中文翻译未经官方审核。代码已按 Rig {VERSION} 更新；英文快照保存在 source，验证范围见版本说明。<br>原文版权归 Playgrounds / Rig 作者所有 · <a href="LICENSE.txt">MIT 许可</a> · <a href="versions.html">升级与验证记录</a></footer></main><aside class="rail" aria-label="本页目录"><h2 class="rail-title">本页目录</h2><nav>{toc or '<a href="#main">概览</a>'}</nav><div class="rail-footer">阅读提示<br>API 名称保留英文，便于查阅和复制。<a href="versions.html">查看编译与运行记录 →</a></div></aside></div>
 <dialog id="search-dialog" aria-label="搜索中文文档"><div class="search-top"><label for="search-input" class="sr-only">搜索中文概念或 API 名称</label><input id="search-input" type="search" placeholder="搜索中文概念或 API 名称…" autocomplete="off"><button id="search-close" aria-label="关闭搜索">Esc</button></div><p id="search-caption" class="search-caption" role="status">搜索中文概念、方法名或英文术语。</p><ul class="search-results" id="search-results"></ul></dialog><div id="status" class="sr-only" role="status" aria-live="polite"></div></body></html>'''
 
 def code_html(code,i):
@@ -62,11 +65,11 @@ def code_html(code,i):
 def notes(p,source,codes):
  count=sum(c['lang']=='rust' for c in codes)
  changed=sum(a['text']!=b['text'] for a,b in zip(codes,json.loads((S/(p['id']+'.codes.json')).read_text())))
- extra=f'本页 {count} 个 Rust 代码块均有编译检查记录；片段已补齐所需上下文。' if count else '依赖与版本引用已同步到 0.46.0。'
+ extra=f'本页 {count} 个 Rust 代码块均有编译检查记录；片段已补齐所需上下文。' if count else f'依赖与版本引用已同步到 {VERSION}。'
  if changed:extra+=f' {changed} 个代码块已更新。'
  if p['id']=='33':extra+=' 历史数据勘误：6 MB / 202 MB ≈ 2.97%。'
  if p['id']=='34':extra+=' 历史数据勘误：113.1 MB − 96.1 MB = 17.0 MB。'
- return '<section class="notice" aria-label="版本与验证"><strong>Rig 0.46.0 实际适配版</strong><p>'+extra+'</p><a href="versions.html">查看逐块编译结果、运行前提与示例项目 →</a></section>'
+ return f'<section class="notice" aria-label="版本与验证"><strong>Rig {VERSION} 实际适配版</strong><p>'+extra+'</p><a href="versions.html">查看逐块编译结果、运行前提与示例项目 →</a></section>'
 
 def render(p):
  raw=(C/(p['id']+'.md')).read_text(); source=(S/(p['id']+'.md')).read_text(); codes=json.loads((C/'codes'/(p['id']+'.codes.json')).read_text())
@@ -78,7 +81,7 @@ def render(p):
   rendered=code_html(c,i)
   check=validation.get('blocks',{}).get(p['id']+':'+str(i))
   if check:
-   rendered+='<p class="page-meta"><a href="checks/'+E(check['file'])+'">完整代码与上下文 ↗</a><span>'+('编译通过' if check['status']=='passed' else '待验证')+' · Rig 0.46.0</span></p>'
+   rendered+='<p class="page-meta"><a href="checks/'+E(check['file'])+'">完整代码与上下文 ↗</a><span>'+('编译通过' if check['status']=='passed' else '待验证')+f' · Rig {VERSION}</span></p>'
   body=body.replace(f'@@CODE_{i:03d}@@',rendered)
  body=re.sub(r'@@ANCHOR:([^@]+)@@',lambda m:'<div class="source-anchor" data-anchor="'+E(m[1],quote=True)+'"></div>',body)
  soup=BeautifulSoup(markdown.markdown(body,extensions=['tables','fenced_code','sane_lists']),'html.parser')
@@ -114,14 +117,14 @@ def render(p):
  for h in soup.select('h2[id],h3[id]'):
   title=h.get_text(' ',strip=True);toc.append(f'<a class="depth-{h.name[1]}" href="#{E(h["id"])}">{E(title)}</a>')
   a=soup.new_tag('a',href='#'+h['id'],attrs={'class':'heading-anchor','aria-label':'链接到'+title});a.string='#';h.append(a)
- i=int(p['id']);pager='<nav class="pagination" aria-label="文档翻页">'
+ i=manifest.index(p);pager='<nav class="pagination" aria-label="文档翻页">'
  if i>0:
   prev=manifest[i-1];pager+=f'<a href="{prev["file"]}"><small>← 上一篇</small>{E(prev["zh"])}</a>'
  else:pager+='<span></span>'
  if i<len(manifest)-1:
   nxt=manifest[i+1];pager+=f'<a class="next" href="{nxt["file"]}"><small>下一篇 →</small>{E(nxt["zh"])}</a>'
  pager+='</nav>'
- meta=f'<div class="page-meta"><span>{E(p["group"])}</span><span>官网快照 · 2026-11-10</span><a href="{p["url"]}">阅读英文原文 ↗</a></div>'
+ meta=f'<div class="page-meta"><span>{E(p["group"])}</span><span>官网快照 · {p["fetched_on"]}</span><a href="{p["url"]}">阅读英文原文 ↗</a></div>'
  (D/p['file']).write_text(shell(p['zh'],str(soup),p['id'],''.join(toc),meta,notes(p,source,codes),pager))
  # All code DOM text must match the checked 0.46.0 overlay.
  for actual,original in zip(soup.select('.code-block code'),codes):assert actual.get_text()==original['text'],(p['id'],'code altered')
@@ -129,6 +132,7 @@ def render(p):
  search={'title':p['zh'],'english':p['title'],'group':p['group'],'href':p['file'],'text':soup.get_text(' ',strip=True)}
  return search
 
+if D.exists():shutil.rmtree(D)
 D.mkdir(exist_ok=True)
 shutil.copytree(R/'assets',D/'assets',dirs_exist_ok=True)
 (D/'.nojekyll').touch()
@@ -141,7 +145,7 @@ index=[render(p) for p in manifest]
 (D/'assets'/'search-index.js').write_text('window.RIG_SEARCH='+json.dumps(index,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')+';\n')
 if (R/'VERSIONS.md').exists():
  version_html=markdown.markdown((R/'VERSIONS.md').read_text().split('\n',1)[1],extensions=['tables','fenced_code'])
- (D/'versions.html').write_text(shell('0.46.0 升级与验证',version_html))
+ (D/'versions.html').write_text(shell(f'{VERSION} 升级与验证',version_html))
 shutil.copyfile(R/'LICENSE.upstream',D/'LICENSE.txt')
 (R/'translation-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2))
 print(f'Built {len(manifest)} translated pages; {sum(p["code_blocks"] for p in manifest)} versioned code blocks rendered')
@@ -150,8 +154,11 @@ print(f'Built {len(manifest)} translated pages; {sum(p["code_blocks"] for p in m
 import zipfile
 shutil.copytree(R/'examples',D/'checks/examples',dirs_exist_ok=True,ignore=shutil.ignore_patterns('target','__pycache__'))
 for name in ['validation.json','code-changes.diff']:shutil.copyfile(R/name,D/name)
-with zipfile.ZipFile(D/'examples-046.zip','w',zipfile.ZIP_DEFLATED) as archive:
+with zipfile.ZipFile(D/'examples.zip','w',zipfile.ZIP_DEFLATED) as archive:
  for f in (R/'examples').rglob('*'):
   if f.is_file() and 'target' not in f.parts:archive.write(f,str(f.relative_to(R)))
  archive.write(R/'validation.json','validation.json')
- archive.writestr('README.md','# Rig 0.46.0 示例\n\n所有项目均有 Cargo.lock。Rust 1.97.1。\n\n核心检查：`cargo check --locked --all-targets --manifest-path examples/core/Cargo.toml`\n\n离线测试：`cargo test --locked --manifest-path examples/core/Cargo.toml --test offline`\n\n具体运行前提见各项目 README；真实服务需要自己的凭证。\n')
+ archive.writestr('README.md',f'# Rig {VERSION} 示例\n\n所有项目均有 Cargo.lock。Rust {RUST_VERSION}。\n\n核心检查：`cargo check --locked --all-targets --manifest-path examples/core/Cargo.toml`\n\n离线测试：`cargo test --locked --manifest-path examples/core/Cargo.toml --test offline`\n\n具体运行前提见各项目 README；真实服务需要自己的凭证。\n')
+
+# Preserve the initial public download URL while exposing a version-independent URL.
+shutil.copyfile(D/'examples.zip',D/'examples-046.zip')

@@ -1,0 +1,111 @@
+name: Compile examples and build verified site
+
+on:
+  workflow_call:
+    inputs:
+      candidate:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust / ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        project: [core, migration, guides, integrations-check, integrations-local, integrations-lance, integrations-surreal]
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        if: inputs.candidate
+        with:
+          name: candidate-source
+          path: /tmp/candidate
+      - name: Restore candidate data only
+        if: inputs.candidate
+        run: python scripts/candidate.py restore /tmp/candidate/candidate.zip
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler libssl-dev pkg-config clang cmake
+      - name: Install pinned Rust
+        run: |
+          rustup show
+          rustc --version
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-${{ runner.os }}-${{ matrix.project }}-${{ hashFiles('examples/**/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-${{ matrix.project }}-
+      - name: Compile every target/feature and run offline regressions
+        env:
+          PROJECT: ${{ matrix.project }}
+        run: python scripts/check_examples.py --project "$PROJECT" --ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rust-${{ matrix.project }}
+          include-hidden-files: true
+          path: |
+            .ci-results/
+            validation-logs/
+          retention-days: 14
+
+  build:
+    needs: rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - uses: actions/download-artifact@v4
+        if: inputs.candidate
+        with:
+          name: candidate-source
+          path: /tmp/candidate
+      - if: inputs.candidate
+        run: python scripts/candidate.py restore /tmp/candidate/candidate.zip
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: rust-*
+          merge-multiple: true
+          path: .
+      - name: Match compiler evidence to this exact source
+        run: python scripts/verify_ci.py
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python scripts/build.py
+      - run: python scripts/verify.py
+      - name: Package validated source
+        if: inputs.candidate
+        run: python scripts/candidate.py pack validated.zip
+      - uses: actions/upload-artifact@v4
+        if: inputs.candidate
+        with:
+          name: validated-source
+          path: validated.zip
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
