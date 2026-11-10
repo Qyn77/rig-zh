@@ -32,6 +32,7 @@ jobs:
           SYNC_MAX_TOKENS: '60000'
         run: python scripts/accept_deepseek.py prepare
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: deepseek-generated-sample
           path: .acceptance/

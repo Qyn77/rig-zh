@@ -7,6 +7,9 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
+from pygments import lex
+from pygments.lexers import RustLexer
+from pygments.token import Comment, String
 from automation import ROOT, clean_env
 from snapshot import validate_translation
 from sync_deepseek import DeepSeek, Editor, SYSTEM, TOOLS
@@ -32,7 +35,10 @@ Use a separate conversation identifier for each user. Attaching a memory store e
 
 def validate_result(result):
     validate_translation(ENGLISH, result['markdown'])
-    code = result['rust']
+    # Migration comments may legitimately mention the replaced API names.
+    # Inspect executable Rust tokens; Cargo remains the actual compiler gate.
+    code = ''.join(text for token, text in lex(result['rust'], RustLexer())
+                   if token not in Comment and token not in String)
     for name in ('Catalog', 'MemoryStore', 'AgentBuilder'):
         if name not in code:
             raise ValueError('Migration omitted required capability: ' + name)
@@ -58,10 +64,10 @@ rust 为迁移到目标 Rig 版本的完整可编译程序：使用 Catalog 连�
 使用旧示例识别待迁移能力，使用已编译的参考代码核对真实 API。migration_notes 用中文说明实际替换的 API。''',
         json.dumps({'target_version': version, 'english': ENGLISH, 'old_snippets': legacy,
                     'verified_api_references': references}, ensure_ascii=False))
-    validate_result(result)
     OUT.mkdir(exist_ok=True)
     (OUT / 'generated.rs').write_text(result['rust'])
     (OUT / 'translation.md').write_text(result['markdown'])
+    validate_result(result)
 
     # Exercise the production client's actual multi-turn tool-call protocol.
     # Scope this test to two disposable Markdown files, without compilation here.
